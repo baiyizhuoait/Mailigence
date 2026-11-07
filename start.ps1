@@ -128,8 +128,11 @@ function Wait-PgReady {
 }
 
 # ---- 3. Start PostgreSQL ----------------------------------------------------
-$listening = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
-if (-not $listening) {
+# Ask PostgreSQL itself instead of the OS socket table. Get-NetTCPConnection can
+# report nothing for a port that genuinely accepts connections (the TCP/IP
+# helper service may be unavailable), and that made the script try to start an
+# already-running cluster and then wait forever for it to "come up".
+if (-not (Wait-PgReady -Port $Port -TimeoutSec 2)) {
     if ($Bundled) {
         if (-not (Test-Path $PgData)) {
             Write-Host "[3/6] First run: initializing data directory..."
@@ -183,20 +186,13 @@ if (-not $listening) {
         }
         # Start pg_ctl fully detached. Do NOT use -Wait: waiting on pg_ctl
         # hangs while the spawned postmaster keeps the console handles open.
-        # Readiness is verified below by polling the port instead.
+        # Readiness is verified below with the same real probe used above.
         $ctlArgs = "-D `"$PgData`" -l `"$PgLog`" -o `"-p $Port`" start"
         Start-Process -FilePath $PgCtl -ArgumentList $ctlArgs -WindowStyle Hidden | Out-Null
-        $pgUp = $false
-        for ($i = 0; $i -lt 60; $i++) {
-            Start-Sleep -Milliseconds 500
-            if (Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue) {
-                $pgUp = $true
-                break
-            }
-        }
-        if (-not $pgUp) {
+        if (-not (Wait-PgReady -Port $Port -TimeoutSec 60)) {
             Write-Host "PostgreSQL did not become ready on port $Port. See $PgLog" -ForegroundColor Red
             if (Test-Path $PgLog) { Get-Content $PgLog -Tail 10 }
+            Read-Host "Press Enter to exit"
             exit 1
         }
     } else {
