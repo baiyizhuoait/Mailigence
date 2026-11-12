@@ -188,7 +188,30 @@ if (-not (Wait-PgReady -Port $Port -TimeoutSec 2)) {
         # hangs while the spawned postmaster keeps the console handles open.
         # Readiness is verified below with the same real probe used above.
         $ctlArgs = "-D `"$PgData`" -l `"$PgLog`" -o `"-p $Port`" start"
-        Start-Process -FilePath $PgCtl -ArgumentList $ctlArgs -WindowStyle Hidden | Out-Null
+        # Launch it through WMI so the postmaster is NOT attached to this
+        # console. `pg_ctl start` normally spawns postgres as a child of the
+        # window that launched it, and Windows sends a close event to that whole
+        # console group when the window disappears - so closing the launcher
+        # (or whatever console started it) killed the database uncleanly, which
+        # is exactly what kept producing "database system was not properly shut
+        # down" and a stale postmaster.pid. A WMI-created process has no console
+        # at all (parent: WmiPrvSE) and runs as the current user, no admin
+        # rights needed. Registering the cluster as a Windows service is the
+        # other supported route, but that requires elevation.
+        $ctlLine = "`"$PgCtl`" $ctlArgs"
+        $spawned = $false
+        try {
+            $spawn = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $ctlLine }
+            $spawned = ($spawn.ReturnValue -eq 0)
+            if (-not $spawned) {
+                Write-Host "  WMI launch returned $($spawn.ReturnValue); falling back to a console-attached start" -ForegroundColor Yellow
+            }
+        } catch {
+            Write-Host "  WMI launch unavailable; falling back to a console-attached start" -ForegroundColor Yellow
+        }
+        if (-not $spawned) {
+            Start-Process -FilePath $PgCtl -ArgumentList $ctlArgs -WindowStyle Hidden | Out-Null
+        }
         if (-not (Wait-PgReady -Port $Port -TimeoutSec 60)) {
             Write-Host "PostgreSQL did not become ready on port $Port. See $PgLog" -ForegroundColor Red
             if (Test-Path $PgLog) { Get-Content $PgLog -Tail 10 }
