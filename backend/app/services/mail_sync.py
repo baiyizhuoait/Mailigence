@@ -86,10 +86,16 @@ async def upsert_mails(db: AsyncSession, account: EmailAccount, mails: list[Norm
     # surfaces as unread in the inbox and never consumes an LLM analysis call.
     blocked = await _blocked_sender_keys(db, account.id)
     now = datetime.now(timezone.utc)
-    rows = []
+    rows: list[dict] = []
+    # One row per message id. A single `INSERT ... ON CONFLICT DO UPDATE` cannot
+    # touch the same conflict key twice ("cannot affect row a second time"), and
+    # duplicate message ids do reach this point: IMAP folder sweeps can return the
+    # same message from several folders (Gmail labels, All Mail), and Graph pages
+    # can overlap. Last occurrence wins so the freshest field values are kept.
+    seen_at: dict[str, int] = {}
     for m in mails:
         is_blocked = bool(m.sender_email) and m.sender_email.strip().lower() in blocked
-        rows.append({
+        row = {
             "account_id": account.id,
             "platform": account.platform,
             "message_id": m.message_id,
@@ -110,7 +116,14 @@ async def upsert_mails(db: AsyncSession, account: EmailAccount, mails: list[Norm
             "suggested_action": "ignore" if is_blocked else None,
             "handled_at": now if is_blocked else None,
             "analyzed_at": now if is_blocked else None,
-        })
+        }
+        if m.message_id:
+            previous = seen_at.get(m.message_id)
+            if previous is not None:
+                rows[previous] = row
+                continue
+            seen_at[m.message_id] = len(rows)
+        rows.append(row)
 
     stmt = insert(UnifiedEmail).values(rows)
     # On conflict, refresh volatile fields (read state, snippet) but never
@@ -247,6 +260,10 @@ async def sync_account(
         await db.commit()
         return count
     except Exception as exc:
+        # The failure may have aborted the transaction (a rejected upsert does),
+        # and writing the status on a poisoned session raises again - which is
+        # how an account used to stay stuck in "SYNCING" with no visible reason.
+        await db.rollback()
         account.sync_status = SyncStatus.ERROR
         account.last_error = str(exc)[:500]
         await db.commit()
