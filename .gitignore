@@ -30,6 +30,8 @@ logs/
 # ---- IDE / OS ----
 .idea/
 .vscode/
+# Trae editor workspace data
+.trae/
 *.swp
 .DS_Store
 Thumbs.db
