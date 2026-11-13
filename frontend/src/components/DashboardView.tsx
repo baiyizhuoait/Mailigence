@@ -42,6 +42,10 @@ export function DashboardView() {
   const [handlingIds, setHandlingIds] = useState<Set<number>>(new Set());
   const [selectedEmailId, setSelectedEmailId] = useState<number | null>(null);
   const [aiAvailable, setAiAvailable] = useState<boolean | null>(null);
+  // Demo instances show a "reset demo data" affordance and a hint that the
+  // mailboxes are fake, so a visitor never mistakes them for real ones.
+  const [demoMode, setDemoMode] = useState(false);
+  const [resettingDemo, setResettingDemo] = useState(false);
   // Undo affordance for the manual "mark handled" action: the id of the last
   // mail we just handled, shown in a transient toast.
   const [undoId, setUndoId] = useState<number | null>(null);
@@ -159,6 +163,19 @@ export function DashboardView() {
     setSyncing(false);
   }, [fullRefresh]);
 
+  const resetDemo = useCallback(async () => {
+    setResettingDemo(true);
+    try {
+      await api.resetDemo();
+      await fullRefresh();
+      await fetchSchedule();
+    } catch {
+      /* ignore: the button is a convenience, not a critical path */
+    } finally {
+      setResettingDemo(false);
+    }
+  }, [fullRefresh, fetchSchedule]);
+
   const quickPoll = useCallback(async () => {
     try {
       const s = await api.getDashboardSummary();
@@ -193,6 +210,10 @@ export function DashboardView() {
         bootStats({ mode: s.analysis_mode });
       })
       .catch(() => setAiAvailable(false));
+    api
+      .getDemoStatus()
+      .then((s) => setDemoMode(s.demo_mode))
+      .catch(() => setDemoMode(false));
   }, [fullRefresh]);
 
   useEffect(() => {
@@ -297,6 +318,20 @@ export function DashboardView() {
           <div className="dash-stat-num">{summary?.today_count ?? 0}</div>
           <div className="dash-stat-label">{t("dash.today")}</div>
         </div>
+        <div className="dash-stat-card saved" title={t("dash.savedHint")}>
+          <div className="dash-stat-num">{summary?.minutes_saved_today ?? 0}</div>
+          <div className="dash-stat-label">{t("dash.saved")}</div>
+        </div>
+        {demoMode && (
+          <button
+            className="dash-refresh-btn"
+            onClick={resetDemo}
+            disabled={resettingDemo}
+            title={t("dash.demoResetHint")}
+          >
+            ⟲
+          </button>
+        )}
         <button
           className="dash-refresh-btn"
           onClick={forceSyncAndRefresh}

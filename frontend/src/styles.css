@@ -3522,6 +3522,17 @@ button {
   background: linear-gradient(135deg, var(--panel), rgba(224, 122, 95, 0.06));
 }
 
+/* "Minutes saved" — the one number that answers "what did this tool do for
+   me today", so it gets the accent treatment instead of a plain card. */
+.dash-stat-card.saved {
+  border-color: rgba(74, 158, 255, 0.45);
+  background: linear-gradient(135deg, var(--panel), rgba(74, 158, 255, 0.08));
+}
+
+.dash-stat-card.saved .dash-stat-num {
+  color: var(--accent);
+}
+
 .dash-stat-num {
   font-family: var(--font-display);
   font-size: 28px;
@@ -4798,4 +4809,143 @@ mark {
 .search-empty-icon {
   font-size: 34px;
   margin: 0;
+}
+
+/* ---------------- Mobile hardening ---------------- */
+/* Grid and flex children default to min-width:auto, so one wide child (the
+   header row) used to stretch the whole page past the viewport and clip every
+   card on the right. Pinning min-width:0 makes the viewport the width ceiling. */
+
+@media (max-width: 760px) {
+  .app-shell,
+  .app-shell > *,
+  .content,
+  .dashboard-view,
+  .dash-grid {
+    min-width: 0;
+  }
+
+  /* Header: keep the brand on one line and let the tabs scroll sideways
+     instead of squeezing each label into a vertical stack of characters. */
+  .sidebar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .brand-sub {
+    display: none;
+  }
+  .brand-name {
+    font-size: 17px;
+  }
+  .nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  /* Stat cards: two per row; the "minutes saved" card gets its own row. */
+  .dash-stats-row {
+    flex-wrap: wrap;
+  }
+  .dash-stat-card {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 0;
+  }
+  .dash-stat-card.saved {
+    flex-basis: 100%;
+  }
+
+  /* The advisor split view stacks; a drag divider has no meaning here. */
+  .dash-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dash-splitter {
+    display: none;
+  }
+  .dash-grid > .dash-left,
+  .dash-grid > .dash-right {
+    margin: 0;
+  }
+  .dash-right {
+    margin-top: 16px;
+  }
+
+  /* Title and search share one row on desktop; on a phone the search field
+     needs its own line or it gets clipped at the right edge. */
+  .topbar {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .search-bar {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+  .search-bar .search-input {
+    min-width: 0;
+  }
+
+  /* Queue cards: the meta row used to hold the card at its min-content width
+     (~404px) and push the whole list sideways. Let the text ellipsis instead. */
+  .dash-queue-item,
+  .dash-queue-item > *,
+  .dash-advisor-action {
+    min-width: 0;
+  }
+  /* The advisor column is narrower than the card's intrinsic width, so the
+     card has to be pinned to its column instead of sizing to its content. */
+  .dash-advisor-actions > * {
+    width: 100%;
+    max-width: 100%;
+  }
+  .dash-queue-meta {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .dash-queue-sender {
+    max-width: 100%;
+  }
+
+  /* Toolbars and stat grids wrap instead of overflowing. */
+  .mailbox-toolbar,
+  .batch-bar,
+  .ad-toolbar,
+  .dash-queue-actions,
+  .dash-advisor-actions,
+  .account-actions {
+    flex-wrap: wrap;
+  }
+  .report-cards,
+  .action-dist {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .reply-stats,
+  .ai-mode-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .content {
+    padding: 14px;
+  }
+  .page-title {
+    font-size: 22px;
+  }
+  .dash-stat-card {
+    flex-basis: calc(50% - 6px);
+  }
+  .email-row {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
 }

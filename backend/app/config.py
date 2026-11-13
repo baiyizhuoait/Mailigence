@@ -73,6 +73,20 @@ class Settings(BaseSettings):
     # LLM again (cost control). 0/false (default): AI mode always calls the AI.
     ai_dedup_cache: bool = False
 
+    # Demo mode (competition / trial instances).
+    # Seeds a self-contained fake mailbox set so someone without credentials can
+    # explore the product, and disables every network-bound background loop.
+    # Never enable on an instance that also holds real mailboxes: the seeded
+    # accounts share the same tables as real ones.
+    demo_mode: bool = False
+    # Optional shared secret for a publicly reachable demo. Empty = no gate
+    # (loopback-only local use). See the middleware in app.main.
+    demo_access_token: str = ""
+    # A public demo may hold a real provider key, so its AI calls are budgeted:
+    # per-visitor hourly and instance-wide daily. 0 disables the cap.
+    demo_ai_daily_limit: int = 300
+    demo_ai_ip_hourly_limit: int = 20
+
     # OAuth2 providers
     google_oauth_client_id: str = ""
     google_oauth_client_secret: str = ""

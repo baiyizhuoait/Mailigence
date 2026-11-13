@@ -310,6 +310,13 @@ export const api = {
 
   // ---------------- Dashboard ----------------
 
+  getDemoStatus: () => request<{ demo_mode: boolean }>("/demo/status"),
+
+  resetDemo: () =>
+    request<{ reset: boolean; accounts: number }>("/demo/reset", {
+      method: "POST",
+    }),
+
   getDashboardSummary: () =>
     request<DashboardSummary>("/dashboard/summary"),
 

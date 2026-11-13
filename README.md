@@ -6,6 +6,25 @@
 
 Mailigence 是一个自托管的邮件聚合与 AI 分析工具。将 Gmail / Outlook / QQ 邮箱 / 163 等任意支持 IMAP 的邮箱统一聚合到一个界面，用 AI（或纯规则）自动完成**分类、优先级排序、待办队列、日程提取与每日摘要**——早上看一眼，今天要做什么一目了然。
 
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" alt="Mailigence 仪表盘：优先级队列、AI 每日简报与日程" width="920">
+</p>
+
+<p align="center">
+  <sub>截图使用内置演示数据，不含任何真实邮件</sub>
+</p>
+
+## ⏱️ 30 秒看懂
+
+1. **接入** —— 用应用专用密码或 OAuth2 接入 Gmail / Outlook / QQ / 163，任意 IMAP 邮箱均可。
+2. **归类** —— AI（或零成本纯规则模式）为每封邮件打上类别、优先级与处理建议，广告自动归档。
+3. **行动** —— 仪表盘只留「今天真正需要处理的几封」，配 AI 每日简报与自动提取的日程。
+4. **省时** —— 顶部「今日省时」按 `自动归类封数 × 15 秒 + 队列处理封数 × 45 秒` 折算，每天省下多少分钟一目了然。
+
+| 优先级队列（含处理耗时预估） | 移动端同一套界面 |
+|---|---|
+| <img src="docs/screenshots/queue.png" width="430"> | <img src="docs/screenshots/mobile.png" width="250"> |
+
 <p>
   <img src="https://img.shields.io/badge/stack-FastAPI%20%2B%20React%20%2B%20PostgreSQL-4a9eff" alt="stack">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="license">
@@ -59,6 +78,8 @@ Mailigence 是一个自托管的邮件聚合与 AI 分析工具。将 Gmail / Ou
 
 本仓库提供两条互不干扰的启动方式，任选其一：
 
+> 只想先看看效果？在 `.env.docker` 里设置 `DEMO_MODE=1` 后执行 `docker compose up -d`，会自动生成 4 个虚构邮箱与约 70 封已归类邮件，**不连接任何真实账户**；仪表盘右上角的 ⟲ 可随时重置。
+
 | 方式 | 适用 | 命令 / 操作 |
 |---|---|---|
 | **跨平台 Docker 一键启动**（推荐） | macOS / Linux / Windows（需 Docker） | `docker compose up -d` |
@@ -96,6 +117,16 @@ docker compose up -d
 - 停止（保留数据）：`docker compose down`
 - 彻底清空（删库，慎用）：`docker compose down -v`
 - 若之前运行过旧版（仅数据库）的 docker-compose，请先 `docker compose down` 再启动新版，避免容器名冲突。
+
+### 无邮箱也能体验：演示模式
+
+评审 / 试用场景不必准备真实邮箱。设置 `DEMO_MODE=1` 后重启后端，首次启动会自动播种 **4 个虚构邮箱、约 70 封已归类邮件**，并关闭全部联网后台任务（IMAP IDLE、定时同步、AI 分析、向量化），因此**没有 AI Key 也能完整浏览**仪表盘、优先级队列、日程、搜索与报表。
+
+- 演示数据全部虚构，邮箱域名统一为 `@demo.mailigence.local`，不会连接任何真实服务器。
+- 仪表盘右上角的 ⟲ 按钮调用 `POST /api/demo/reset`，一键恢复初始数据。
+- 演示模式下「添加邮箱 / 同步 / 导入」接口返回 403，数据只读，不会误存真实凭据。
+- 若演示实例需要放到公网，请同时设置 `DEMO_ACCESS_TOKEN=<口令>`：首次访问需带 `?token=<口令>`，之后浏览器保存 7 天 Cookie。
+- 想让人在线体验 AI 问答 / AI 回复草稿，填入 `AI_API_KEY`（`AI_ANALYSIS_MODE` 保持 `auto`）即可；程序按 `DEMO_AI_IP_HOURLY_LIMIT`（每人每小时，默认 20）和 `DEMO_AI_DAILY_LIMIT`（整实例每天，默认 300）限流，超出返回 429，避免公开实例的 Key 被刷。
 
 ### Windows 免 Docker 一键启动（start.bat / start.ps1）
 

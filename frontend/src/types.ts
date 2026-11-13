@@ -257,6 +257,12 @@ export interface DashboardSummary {
   unread_count: number;
   today_count: number;
   last_mail_at: string | null;
+  /** Mails the pipeline classified today (input of the "time saved" card). */
+  classified_today: number;
+  /** Pending mails dismissed from the queue today. */
+  handled_today: number;
+  /** Conservative estimate of manual minutes replaced, computed server-side. */
+  minutes_saved_today: number;
 }
 
 export interface ScheduleItem {

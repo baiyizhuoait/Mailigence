@@ -157,8 +157,9 @@ async def dashboard_summary(
     if account_id is not None:
         base_cond = base_cond + (UnifiedEmail.account_id == account_id,)
 
-    # One round-trip instead of five: conditional aggregates replace the five
-    # sequential COUNT/MAX queries. The dashboard polls this endpoint every 10s.
+    # Conditional aggregates keep the polled header to two round-trips (one for
+    # the pending-mail counters, one for today's handled count) instead of six.
+    # The dashboard polls this endpoint every 10s.
     today_start = datetime.now(timezone.utc).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
@@ -179,9 +180,34 @@ async def dashboard_summary(
                 func.count(UnifiedEmail.id)
                 .filter(UnifiedEmail.received_at >= today_start)
                 .label("today_count"),
+                # Mails the pipeline already sorted today (the "time saved"
+                # input). Handled mail is excluded by base_cond, so it is
+                # counted separately below.
+                func.count(UnifiedEmail.id)
+                .filter(UnifiedEmail.analyzed_at >= today_start)
+                .label("classified_today"),
             ).where(*base_cond)
         )
     ).one()
+
+    # Handled mail is invisible to base_cond (handled_at IS NULL), so it needs
+    # its own count — this is the second half of the "time saved" estimate.
+    handled_today = (
+        await db.execute(
+            select(func.count(UnifiedEmail.id)).where(
+                UnifiedEmail.direction == MailDirection.INBOX,
+                UnifiedEmail.handled_at >= today_start,
+            )
+        )
+    ).scalar_one()
+
+    # Rough, deliberately conservative estimate: sorting one mail by hand costs
+    # ~15s (read sender/subject, decide where it belongs), and working through a
+    # pending item from the inbox costs ~45s (find it again, re-read, act).
+    # Shown in the UI as "minutes saved" with the formula in the tooltip.
+    minutes_saved = round(
+        (row.classified_today * 15 + handled_today * 45) / 60
+    )
 
     return {
         "pending_count": row.pending_count,
@@ -189,4 +215,7 @@ async def dashboard_summary(
         "unread_count": row.unread_count,
         "today_count": row.today_count,
         "last_mail_at": row.last_mail_at.isoformat() if row.last_mail_at else None,
+        "classified_today": row.classified_today,
+        "handled_today": handled_today,
+        "minutes_saved_today": minutes_saved,
     }
