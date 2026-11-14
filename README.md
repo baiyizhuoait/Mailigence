@@ -2,6 +2,8 @@
 
 # Mailigence — 多平台邮件聚合分析仪表盘
 
+[![CI](https://github.com/baiyizhuoait/Mailigence/actions/workflows/ci.yml/badge.svg)](https://github.com/baiyizhuoait/Mailigence/actions/workflows/ci.yml)
+
 > 把散落在各邮箱的信息，汇聚成一份智能行动清单。
 
 Mailigence 是一个自托管的邮件聚合与 AI 分析工具。将 Gmail / Outlook / QQ 邮箱 / 163 等任意支持 IMAP 的邮箱统一聚合到一个界面，用 AI（或纯规则）自动完成**分类、优先级排序、待办队列、日程提取与每日摘要**——早上看一眼，今天要做什么一目了然。

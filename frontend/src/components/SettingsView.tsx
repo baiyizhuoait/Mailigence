@@ -19,6 +19,7 @@ import type {
   ProviderProfile,
   ProviderType,
 } from "../types";
+import { SystemStatusPanel } from "./SystemStatusPanel";
 
 /** True when the base_url points at a local inference server (probe-able). */
 function isLocalBaseUrl(url: string): boolean {
@@ -559,6 +560,9 @@ export function SettingsView() {
 
   return (
     <div className="settings-view">
+      {/* System self-check — first so stability is visible on open */}
+      <SystemStatusPanel />
+
       {/* AI analysis */}
       <section className="settings-section">
         <h3 className="settings-section-title">{t("settings.ai")}</h3>
@@ -597,6 +601,15 @@ export function SettingsView() {
                     ? t("settings.ai.keyFromDb")
                     : t("settings.ai.keyFromEnv")
                   : t("settings.ai.keyNotSet")}
+              </span>
+            )}
+            {status?.base_url && (
+              <span
+                className={`ai-privacy ${isLocalBaseUrl(status.base_url) ? "local" : "cloud"}`}
+              >
+                {isLocalBaseUrl(status.base_url)
+                  ? t("settings.ai.localBadge")
+                  : t("settings.ai.cloudBadge")}
               </span>
             )}
           </div>
@@ -662,6 +675,15 @@ export function SettingsView() {
                         {t(`settings.profileType.${p.provider_type}`)}
                       </span>
                       {p.api_key_configured && <span className="profile-badge key">API Key</span>}
+                      {p.provider_type !== "rules_only" && p.base_url && (
+                        <span
+                          className={`profile-badge ${isLocalBaseUrl(p.base_url) ? "local" : "cloud"}`}
+                        >
+                          {isLocalBaseUrl(p.base_url)
+                            ? t("settings.profile.localBadge")
+                            : t("settings.profile.cloudBadge")}
+                        </span>
+                      )}
                     </div>
                     <div className="profile-card-meta mono">
                       {p.base_url}

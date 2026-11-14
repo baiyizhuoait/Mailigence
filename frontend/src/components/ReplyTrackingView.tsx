@@ -4,6 +4,7 @@ import { useI18n } from "../i18n";
 import {
   PLATFORM_LABEL,
   type EmailAccount,
+  type FollowUp,
   type MailDirection,
   type UnifiedEmail,
 } from "../types";
@@ -48,14 +49,20 @@ function fmtTime(iso: string | null | undefined): string {
 export function ReplyTrackingView({ accounts }: ReplyTrackingViewProps) {
   const { t } = useI18n();
   const [accountId, setAccountId] = useState<number | "all">("all");
+  const [tab, setTab] = useState<"pending" | "followups">("pending");
   const [pending, setPending] = useState<UnifiedEmail[]>([]);
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fuLoading, setFuLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
+  const [fuError, setFuError] = useState("");
   const [toast, setToast] = useState<Toast | null>(null);
 
   // 当前展开查看线程的邮件 id（弹窗模式）
-  const [threadEmail, setThreadEmail] = useState<UnifiedEmail | null>(null);
+  const [threadEmail, setThreadEmail] = useState<
+    Pick<UnifiedEmail, "id" | "subject"> | null
+  >(null);
 
   const showToast = useCallback((kind: Toast["kind"], text: string) => {
     setToast({ kind, text });
@@ -80,6 +87,26 @@ export function ReplyTrackingView({ accounts }: ReplyTrackingViewProps) {
   useEffect(() => {
     loadPending();
   }, [loadPending]);
+
+  // Follow-ups are "replied but silent": load them on entry so the tab can
+  // show a live count, and again whenever the account filter changes.
+  const loadFollowUps = useCallback(async () => {
+    setFuLoading(true);
+    setFuError("");
+    try {
+      setFollowUps(
+        await api.getFollowUps(accountId === "all" ? undefined : accountId),
+      );
+    } catch (e) {
+      setFuError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setFuLoading(false);
+    }
+  }, [accountId]);
+
+  useEffect(() => {
+    loadFollowUps();
+  }, [loadFollowUps]);
 
   async function handleSyncSent() {
     if (accounts.length === 0) {
@@ -176,6 +203,10 @@ export function ReplyTrackingView({ accounts }: ReplyTrackingViewProps) {
           <span className="reply-stat-label">{t("replies.pending")}</span>
           <span className="reply-stat-value mono">{pending.length}</span>
         </div>
+        <div className={`reply-stat-card ${followUps.length ? "warn" : ""}`}>
+          <span className="reply-stat-label">{t("replies.tabFollowUps")}</span>
+          <span className="reply-stat-value mono">{followUps.length}</span>
+        </div>
         <div className="reply-stat-card">
           <span className="reply-stat-label">{t("replies.currentFilter")}</span>
           <span className="reply-stat-value">{selectedAccountLabel}</span>
@@ -185,6 +216,27 @@ export function ReplyTrackingView({ accounts }: ReplyTrackingViewProps) {
           <span className="reply-stat-value mono">{accounts.length}</span>
         </div>
       </section>
+
+      <div className="reply-tabs" role="tablist">
+        <button
+          role="tab"
+          aria-selected={tab === "pending"}
+          className={`reply-tab ${tab === "pending" ? "active" : ""}`}
+          onClick={() => setTab("pending")}
+        >
+          {t("replies.tabPending")}
+          <span className="reply-tab-count mono">{pending.length}</span>
+        </button>
+        <button
+          role="tab"
+          aria-selected={tab === "followups"}
+          className={`reply-tab ${tab === "followups" ? "active" : ""}`}
+          onClick={() => setTab("followups")}
+        >
+          {t("replies.tabFollowUps")}
+          <span className="reply-tab-count mono">{followUps.length}</span>
+        </button>
+      </div>
 
       <div className="reply-controls">
         <div className="reply-controls-left">
@@ -223,61 +275,119 @@ export function ReplyTrackingView({ accounts }: ReplyTrackingViewProps) {
           </button>
           <button
             className="btn small ghost"
-            onClick={loadPending}
-            disabled={loading || syncing}
+            onClick={tab === "pending" ? loadPending : loadFollowUps}
+            disabled={loading || fuLoading || syncing}
           >
-            {loading ? t("action.refreshing") : t("action.refresh")}
+            {loading || fuLoading
+              ? t("action.refreshing")
+              : t("action.refresh")}
           </button>
         </div>
       </div>
 
-      {error && <div className="alert error">{error}</div>}
+      {tab === "pending" && error && <div className="alert error">{error}</div>}
+      {tab === "followups" && fuError && (
+        <div className="alert error">
+          {t("replies.followUpFailed")}
+          {fuError}
+        </div>
+      )}
 
-      {loading ? (
+      {tab === "pending" ? (
+        loading ? (
+          <div className="loading">{t("misc.loading")}</div>
+        ) : pending.length === 0 ? (
+          <div className="empty-state">
+            <p className="empty-title">{t("replies.empty")}</p>
+            <p className="empty-sub">{t("replies.emptySub")}</p>
+          </div>
+        ) : (
+          <ul className="reply-list">
+            {pending.map((m) => {
+              const senderLabel =
+                m.sender || m.sender_email || t("misc.unknownSender");
+              return (
+                <li
+                  key={m.id}
+                  className="reply-item"
+                  onClick={() => setThreadEmail(m)}
+                >
+                  <div className="reply-item-main">
+                    <div className="reply-item-top">
+                      <span
+                        className={`tag priority ${priorityClass(m.priority_score)}`}
+                      >
+                        {priorityLabel(m.priority_score)}
+                      </span>
+                      <span className={`platform-tag ${m.platform}`}>
+                        {PLATFORM_LABEL[m.platform] ?? m.platform}
+                      </span>
+                      <span className="reply-sender">{senderLabel}</span>
+                      <span className="reply-time mono">
+                        {fmtTime(m.received_at)}
+                      </span>
+                    </div>
+                    <div className="reply-subject">
+                      {m.subject || t("misc.noSubject")}
+                    </div>
+                    {m.summary ? (
+                      <div className="reply-summary">{m.summary}</div>
+                    ) : (
+                      <div className="reply-summary reply-summary-empty">
+                        {m.body_snippet || t("misc.noSnippet")}
+                      </div>
+                    )}
+                  </div>
+                  <div className="reply-item-action">
+                    <span className="hint">{t("replies.viewThread")}</span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )
+      ) : fuLoading ? (
         <div className="loading">{t("misc.loading")}</div>
-      ) : pending.length === 0 ? (
+      ) : followUps.length === 0 ? (
         <div className="empty-state">
-          <p className="empty-title">{t("replies.empty")}</p>
-          <p className="empty-sub">{t("replies.emptySub")}</p>
+          <p className="empty-title">{t("replies.followUpEmpty")}</p>
+          <p className="empty-sub">{t("replies.followUpEmptySub")}</p>
         </div>
       ) : (
         <ul className="reply-list">
-          {pending.map((m) => {
-            const senderLabel = m.sender || m.sender_email || t("misc.unknownSender");
+          {followUps.map((f) => {
+            const senderLabel =
+              f.sender || f.sender_email || t("misc.unknownSender");
             return (
               <li
-                key={m.id}
-                className="reply-item"
-                onClick={() => setThreadEmail(m)}
+                key={`${f.account_id}-${f.thread_id}`}
+                className="reply-item follow-up-item"
+                onClick={() =>
+                  setThreadEmail({ id: f.email_id, subject: f.subject })
+                }
               >
                 <div className="reply-item-main">
                   <div className="reply-item-top">
-                    <span
-                      className={`tag priority ${priorityClass(m.priority_score)}`}
-                    >
-                      {priorityLabel(m.priority_score)}
+                    <span className="tag priority follow-up-wait">
+                      {t("replies.followUpWaiting", { days: f.days_waiting })}
                     </span>
-                    <span className={`platform-tag ${m.platform}`}>
-                      {PLATFORM_LABEL[m.platform] ?? m.platform}
+                    <span className={`platform-tag ${f.platform}`}>
+                      {PLATFORM_LABEL[f.platform] ?? f.platform}
                     </span>
                     <span className="reply-sender">{senderLabel}</span>
                     <span className="reply-time mono">
-                      {fmtTime(m.received_at)}
+                      {t("replies.followUpLastSent")} {fmtTime(f.last_sent_at)}
                     </span>
                   </div>
                   <div className="reply-subject">
-                    {m.subject || t("misc.noSubject")}
+                    {f.subject || t("misc.noSubject")}
                   </div>
-                  {m.summary ? (
-                    <div className="reply-summary">{m.summary}</div>
-                  ) : (
-                    <div className="reply-summary reply-summary-empty">
-                      {m.body_snippet || t("misc.noSnippet")}
-                    </div>
-                  )}
+                  {f.summary ? (
+                    <div className="reply-summary">{f.summary}</div>
+                  ) : null}
                 </div>
                 <div className="reply-item-action">
-                  <span className="hint">{t("replies.viewThread")}</span>
+                  <span className="hint">{t("replies.viewConversation")}</span>
                 </div>
               </li>
             );
@@ -296,7 +406,7 @@ export function ReplyTrackingView({ accounts }: ReplyTrackingViewProps) {
 }
 
 interface ThreadDialogProps {
-  email: UnifiedEmail;
+  email: Pick<UnifiedEmail, "id" | "subject">;
   onClose: () => void;
 }
 

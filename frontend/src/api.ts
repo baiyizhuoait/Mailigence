@@ -17,6 +17,7 @@ import type {
   EmailAccount,
   EmailCategory,
   EmailListResponse,
+  FollowUp,
   IdleStatus,
   ImportJob,
   ProviderModels,
@@ -30,6 +31,7 @@ import type {
   SearchParams,
   SearchResponse,
   SyncResult,
+  SystemStatus,
   UnifiedEmail,
   UnsubscribeInfo,
 } from "./types";
@@ -288,6 +290,16 @@ export const api = {
   getReplyThread: (email_id: number) =>
     request<UnifiedEmail[]>(`/replies/threads/${email_id}`),
 
+  // Replied threads where the other side has been silent for >= 24h.
+  getFollowUps: (account_id?: number) => {
+    const qs = new URLSearchParams();
+    if (account_id !== undefined && account_id !== null) {
+      qs.set("account_id", String(account_id));
+    }
+    const query = qs.toString();
+    return request<FollowUp[]>(`/replies/follow-ups${query ? `?${query}` : ""}`);
+  },
+
   // ---------------- IDLE monitoring ----------------
 
   startIdle: (account_id: number) =>
@@ -311,6 +323,9 @@ export const api = {
   // ---------------- Dashboard ----------------
 
   getDemoStatus: () => request<{ demo_mode: boolean }>("/demo/status"),
+
+  // Aggregate health snapshot (DB, version, last sync, IDLE, failures).
+  getSystemStatus: () => request<SystemStatus>("/system/status"),
 
   resetDemo: () =>
     request<{ reset: boolean; accounts: number }>("/demo/reset", {

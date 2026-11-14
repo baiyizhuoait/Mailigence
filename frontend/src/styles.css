@@ -4949,3 +4949,408 @@ mark {
     padding-right: 8px;
   }
 }
+
+/* ================= System status / weekly report / follow-ups ================= */
+
+/* Sidebar "all systems operational" pill */
+.sys-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 7px 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text-dim);
+  font-size: 11.5px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.sys-pill:hover {
+  border-color: var(--success);
+  color: var(--text);
+}
+.sys-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--text-faint);
+}
+.sys-dot.ok {
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+}
+.sys-dot.warn {
+  background: var(--error);
+  box-shadow: 0 0 6px var(--error);
+}
+
+/* Settings ▸ System status */
+.sys-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.sys-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sys-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--text-dim);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.sys-badge.ok {
+  color: var(--success);
+  border-color: var(--success);
+}
+.sys-badge.warn {
+  color: var(--error);
+  border-color: var(--error);
+}
+.sys-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.sys-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel-2);
+}
+.sys-cell.ok {
+  border-left-color: var(--success);
+}
+.sys-cell.warn {
+  border-left-color: var(--error);
+}
+.sys-cell-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.sys-cell-value {
+  font-size: 13px;
+  color: var(--text);
+  word-break: break-word;
+}
+.sys-cell-note {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.sys-cell-note.warn {
+  color: var(--error);
+}
+.sys-fail-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sys-fail-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel-2);
+  font-size: 11.5px;
+}
+.sys-fail-kind {
+  min-width: 48px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--error);
+}
+.sys-fail-error {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+.sys-fail-at {
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* Privacy / local-model badges */
+.ai-privacy {
+  display: inline-block;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.ai-privacy.local {
+  color: var(--success);
+  border-color: var(--success);
+}
+.profile-badge.local {
+  color: var(--success);
+}
+.profile-badge.cloud {
+  color: var(--text-dim);
+}
+
+/* Dashboard weekly "cleared" card */
+.dash-week-card {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--panel);
+}
+.dash-week-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dash-week-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.dash-week-sub {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.dash-week-metrics {
+  display: flex;
+  align-items: flex-end;
+  gap: 26px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.dash-week-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  min-width: 54px;
+}
+.dash-week-metric b {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.dash-week-metric span {
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.dash-week-metric.good b {
+  color: var(--success);
+}
+.dash-week-metric.bad b {
+  color: var(--error);
+}
+.dash-week-metric.saved b {
+  color: var(--accent);
+}
+
+/* Reply tracking tabs + follow-ups */
+.reply-tabs {
+  display: flex;
+  gap: 3px;
+  width: max-content;
+  max-width: 100%;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel-2);
+}
+.reply-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 12.5px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.reply-tab:hover {
+  color: var(--text);
+}
+.reply-tab.active {
+  background: var(--accent);
+  color: #1a1e23;
+  font-weight: 600;
+}
+[data-theme="light"] .reply-tab.active {
+  color: #fff;
+}
+.reply-tab-count {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+.reply-tab.active .reply-tab-count {
+  background: rgba(255, 255, 255, 0.28);
+}
+.tag.follow-up-wait {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: transparent;
+  white-space: nowrap;
+}
+.reply-item.follow-up-item {
+  border-left: 2px solid var(--accent);
+}
+.reply-stat-card.warn .reply-stat-value {
+  color: var(--accent);
+}
+
+/* Add-account onboarding guide */
+.connect-guide {
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-2);
+  font-size: 12.5px;
+}
+.connect-guide summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-dim);
+  cursor: pointer;
+  list-style: none;
+}
+.connect-guide summary::-webkit-details-marker {
+  display: none;
+}
+.connect-guide summary::before {
+  content: "▸";
+  color: var(--accent);
+  font-size: 10px;
+}
+.connect-guide[open] summary::before {
+  content: "▾";
+}
+.connect-guide[open] summary {
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.connect-guide-toggle {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.connect-guide-note {
+  margin: 9px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  color: var(--text-dim);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.connect-guide ol {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+.connect-guide-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+  font-size: 11.5px;
+}
+.connect-guide-foot a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.connect-guide-foot a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .sys-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .dash-week-metrics {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .dash-week-metric {
+    align-items: flex-start;
+  }
+  .sys-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sys-head-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .reply-tabs {
+    width: 100%;
+  }
+  .reply-tab {
+    flex: 1;
+    justify-content: center;
+  }
+  .sys-fail-list li {
+    flex-wrap: wrap;
+  }
+  .sys-fail-error {
+    white-space: normal;
+  }
+}

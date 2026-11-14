@@ -32,6 +32,7 @@ from app.api import (
     replies,
     reports,
     search,
+    system,
 )
 from app.api.settings import router as settings_router
 from app.config import settings
@@ -420,3 +421,4 @@ app.include_router(settings_router)
 app.include_router(memories.router)
 app.include_router(search.router)
 app.include_router(chat.router)
+app.include_router(system.router)

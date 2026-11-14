@@ -181,6 +181,113 @@ async def list_pending_replies(
     return list(result.scalars().all())
 
 
+@router.get("/follow-ups")
+async def list_follow_ups(
+    account_id: int | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    """已回复、但对方尚未回信的跟进提醒列表。
+
+    A thread qualifies when we sent at least one mail in it and no newer INBOX
+    mail arrived after our latest reply. Threads younger than 24h are ignored
+    so a normal reply window is not mistaken for silence.
+    """
+    stmt = select(UnifiedEmail).where(
+        UnifiedEmail.direction == MailDirection.INBOX,
+        UnifiedEmail.has_reply.is_(True),
+        UnifiedEmail.thread_id != "",
+    )
+    if account_id is not None:
+        stmt = stmt.where(UnifiedEmail.account_id == account_id)
+    replied = list(
+        (
+            await db.execute(
+                stmt.order_by(UnifiedEmail.received_at.desc().nulls_last()).limit(200)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    if not replied:
+        return []
+
+    # One query for every mail that shares a replied thread.
+    thread_ids = {e.thread_id for e in replied}
+    rows = list(
+        (
+            await db.execute(
+                select(UnifiedEmail).where(UnifiedEmail.thread_id.in_(thread_ids))
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    sent_last: dict[tuple[int, str], "datetime"] = {}
+    inbound_times: dict[tuple[int, str], list["datetime"]] = {}
+    # Bounce notifications arrive in INBOX right after sending; they are not a
+    # human reply, so they must not clear a follow-up reminder.
+    bounce_markers = ("mailer-daemon", "postmaster", "mail-daemon")
+    for m in rows:
+        key = (m.account_id, m.thread_id)
+        stamp = m.received_at or m.created_at
+        if stamp is None:
+            continue
+        if m.direction == MailDirection.SENT:
+            if key not in sent_last or stamp > sent_last[key]:
+                sent_last[key] = stamp
+        else:
+            sender = (m.sender_email or "").lower()
+            if any(marker in sender for marker in bounce_markers):
+                continue
+            inbound_times.setdefault(key, []).append(stamp)
+
+    # Keep the latest replied inbox mail per thread (one reminder per thread).
+    latest_inbox: dict[tuple[int, str], UnifiedEmail] = {}
+    for e in replied:
+        key = (e.account_id, e.thread_id)
+        if key not in latest_inbox:
+            latest_inbox[key] = e
+
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc)
+    out: list[dict] = []
+    for key, email in latest_inbox.items():
+        last_sent = sent_last.get(key)
+        if last_sent is None:
+            continue
+        # Any inbound mail after our last reply means they answered — no chase.
+        if any(t > last_sent for t in inbound_times.get(key, [])):
+            continue
+        waiting_hours = (now - last_sent).total_seconds() / 3600
+        if waiting_hours < 24:
+            continue
+        out.append(
+            {
+                "email_id": email.id,
+                "account_id": email.account_id,
+                "platform": email.platform,
+                "sender": email.sender,
+                "sender_email": email.sender_email,
+                "subject": email.subject,
+                "summary": email.summary,
+                "priority_score": email.priority_score,
+                "received_at": email.received_at.isoformat()
+                if email.received_at
+                else None,
+                "last_sent_at": last_sent.isoformat(),
+                "waiting_hours": round(waiting_hours, 1),
+                "days_waiting": max(1, int(waiting_hours // 24)),
+                "thread_id": email.thread_id,
+            }
+        )
+
+    # Oldest silence first — those need a nudge most.
+    out.sort(key=lambda item: item["last_sent_at"])
+    return out[:50]
+
+
 @router.get("/threads/{email_id}", response_model=list[EmailOut])
 async def get_email_thread(
     email_id: int, db: AsyncSession = Depends(get_db)

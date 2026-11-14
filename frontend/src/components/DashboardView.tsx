@@ -342,6 +342,50 @@ export function DashboardView() {
         </button>
       </div>
 
+      {/* Weekly "cleared" report — closed-loop evidence, not just today */}
+      {summary && (
+        <div className="dash-week-card" title={t("dash.weekHint")}>
+          <div className="dash-week-head">
+            <span className="dash-week-title">{t("dash.week")}</span>
+            <span className="dash-week-sub">
+              {t("dash.weekSub", {
+                date:
+                  (summary.week_start ?? "").slice(5).replace("-", "/") || "—",
+              })}
+            </span>
+          </div>
+          <div className="dash-week-metrics">
+            <div className="dash-week-metric">
+              <b>{summary.handled_week}</b>
+              <span>{t("dash.weekHandled")}</span>
+            </div>
+            <div className="dash-week-metric">
+              <b>{summary.replied_week}</b>
+              <span>{t("dash.weekReplied")}</span>
+            </div>
+            <div className="dash-week-metric">
+              <b>{summary.archived_total}</b>
+              <span>{t("dash.weekArchived")}</span>
+            </div>
+            <div
+              className={`dash-week-metric ${summary.queue_delta_week >= 0 ? "good" : "bad"}`}
+            >
+              <b>
+                {summary.queue_delta_week > 0 ? "+" : ""}
+                {summary.queue_delta_week}
+              </b>
+              <span>{t("dash.weekQueue")}</span>
+            </div>
+            <div className="dash-week-metric saved">
+              <b>{summary.minutes_saved_week}</b>
+              <span>
+                {t("dash.weekSaved")}（{t("dash.weekUnit")}）
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Two-column layout: AI advisor (left) | splitter | AI chat (right) */}
       <div
         className={`dash-grid ${dragging ? "dragging" : ""}`}

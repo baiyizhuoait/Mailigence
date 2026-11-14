@@ -161,6 +161,16 @@ export default function App() {
         </nav>
 
         <div className="sidebar-foot">
+          {health && (
+            <button
+              className="sys-pill"
+              onClick={() => setView("settings")}
+              title={t("sys.pillHint")}
+            >
+              <span className="sys-dot ok" />
+              <span>{t("sys.running")}</span>
+            </button>
+          )}
           {health && !health.encryption_configured && (
             <div className="warn-card">
               {t("misc.encryptionWarn")}

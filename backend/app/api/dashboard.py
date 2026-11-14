@@ -209,6 +209,47 @@ async def dashboard_summary(
         (row.classified_today * 15 + handled_today * 45) / 60
     )
 
+    # ---- "this week cleared" report (Monday 00:00 UTC) --------------------
+    # The weekly card answers "what did the tool actually clear for me",
+    # not just today. ``archived_total`` has no timestamp column, so it is
+    # reported as the current archive size; the other counters are bounded
+    # to this week.
+    week_start = datetime.now(timezone.utc)
+    week_start = week_start - timedelta(days=week_start.weekday())
+    week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_row = (
+        await db.execute(
+            select(
+                func.count(UnifiedEmail.id)
+                .filter(UnifiedEmail.handled_at >= week_start)
+                .label("handled_week"),
+                func.count(UnifiedEmail.id)
+                .filter(
+                    UnifiedEmail.has_reply.is_(True),
+                    UnifiedEmail.handled_at >= week_start,
+                )
+                .label("replied_week"),
+                func.count(UnifiedEmail.id)
+                .filter(UnifiedEmail.is_archived.is_(True))
+                .label("archived_total"),
+                func.count(UnifiedEmail.id)
+                .filter(
+                    actionable,
+                    UnifiedEmail.handled_at.is_(None),
+                    UnifiedEmail.received_at >= week_start,
+                )
+                .label("new_pending_week"),
+                func.count(UnifiedEmail.id)
+                .filter(UnifiedEmail.analyzed_at >= week_start)
+                .label("classified_week"),
+            ).where(UnifiedEmail.direction == MailDirection.INBOX)
+        )
+    ).one()
+    queue_delta_week = week_row.handled_week - week_row.new_pending_week
+    minutes_saved_week = round(
+        (week_row.classified_week * 15 + week_row.handled_week * 45) / 60
+    )
+
     return {
         "pending_count": row.pending_count,
         "urgent_count": row.urgent_count,
@@ -218,4 +259,12 @@ async def dashboard_summary(
         "classified_today": row.classified_today,
         "handled_today": handled_today,
         "minutes_saved_today": minutes_saved,
+        # Weekly "cleared" card.
+        "week_start": week_start.date().isoformat(),
+        "handled_week": week_row.handled_week,
+        "replied_week": week_row.replied_week,
+        "archived_total": week_row.archived_total,
+        "queue_delta_week": queue_delta_week,
+        "classified_week": week_row.classified_week,
+        "minutes_saved_week": minutes_saved_week,
     }

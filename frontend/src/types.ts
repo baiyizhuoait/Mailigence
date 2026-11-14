@@ -263,6 +263,72 @@ export interface DashboardSummary {
   handled_today: number;
   /** Conservative estimate of manual minutes replaced, computed server-side. */
   minutes_saved_today: number;
+  /** ---- Weekly "cleared" report (Monday 00:00 UTC) ---- */
+  week_start: string;
+  handled_week: number;
+  replied_week: number;
+  /** Current archive size (archive has no timestamp column). */
+  archived_total: number;
+  /** handled this week minus new actionable mail received this week. */
+  queue_delta_week: number;
+  classified_week: number;
+  minutes_saved_week: number;
+}
+
+// ---------------- System status ----------------
+
+export interface SystemStatusItem {
+  kind: string;
+  id?: number;
+  account_id?: number;
+  error: string;
+  at: string | null;
+}
+
+export interface SystemStatus {
+  status: "ok" | "degraded";
+  version: string;
+  demo_mode: boolean;
+  uptime_seconds: number;
+  database: { ok: boolean; latency_ms: number; error: string };
+  accounts: { total: number; sync_errors: number };
+  last_sync_at: string | null;
+  idle: {
+    running: number;
+    polling_only: number;
+    errors: number;
+    last_event_at: string | null;
+  };
+  failed_24h: {
+    import_jobs: number;
+    sync_errors: number;
+    items: SystemStatusItem[];
+  };
+  ai: {
+    mode: string;
+    configured: boolean;
+    provider: string;
+    model: string;
+    local: boolean;
+  };
+}
+
+// ---------------- Reply follow-ups ----------------
+
+export interface FollowUp {
+  email_id: number;
+  account_id: number;
+  platform: string;
+  sender: string;
+  sender_email: string;
+  subject: string;
+  summary: string | null;
+  priority_score: number | null;
+  received_at: string | null;
+  last_sent_at: string;
+  waiting_hours: number;
+  days_waiting: number;
+  thread_id: string;
 }
 
 export interface ScheduleItem {
