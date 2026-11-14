@@ -301,9 +301,20 @@ async def get_email_thread(
     if email is None:
         raise HTTPException(status_code=404, detail="Email not found")
 
+    # Mails without a thread id have no conversation of their own. Returning
+    # every row whose thread_id is empty would mix unrelated mail from all
+    # accounts into one "thread".
+    if not (email.thread_id or "").strip():
+        return [email]
+
     stmt = (
         select(UnifiedEmail)
-        .where(UnifiedEmail.thread_id == email.thread_id)
+        .where(
+            UnifiedEmail.thread_id == email.thread_id,
+            # thread ids are only unique per mailbox; without this the view
+            # can pull in another account's mail with a colliding id.
+            UnifiedEmail.account_id == email.account_id,
+        )
         .order_by(UnifiedEmail.received_at.asc())
     )
     result = await db.execute(stmt)

@@ -206,7 +206,7 @@ export function DashboardView() {
     api
       .getAiSettings()
       .then((s) => {
-        setAiAvailable(s.api_key_configured && s.analysis_mode !== "rules_only");
+        setAiAvailable(s.ai_available && s.analysis_mode !== "rules_only");
         bootStats({ mode: s.analysis_mode });
       })
       .catch(() => setAiAvailable(false));

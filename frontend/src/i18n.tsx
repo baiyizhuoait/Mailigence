@@ -247,6 +247,7 @@ const zh: Dict = {
   "settings.ai.keyFromEnv": "密钥来自 .env 环境变量",
   "settings.ai.keyFromDb": "密钥已在界面配置",
   "settings.ai.keyNotSet": "尚未配置 API 密钥",
+  "settings.ai.keyNotRequired": "本地服务免密即可使用",
   // Misc common
   "misc.loading": "加载中…",
   "misc.noAccounts": "尚未接入任何邮箱",
@@ -818,6 +819,7 @@ const en: Dict = {
   "settings.ai.keyFromEnv": "Key from .env environment",
   "settings.ai.keyFromDb": "Key stored via UI settings",
   "settings.ai.keyNotSet": "No API key configured",
+  "settings.ai.keyNotRequired": "Local service — no key needed",
   "misc.loading": "Loading…",
   "misc.noAccounts": "No email accounts connected",
   "misc.noAccountsSub":

@@ -275,7 +275,7 @@ export function SettingsView() {
     }
   }
 
-  const active = status?.api_key_configured && status.analysis_mode !== "rules_only";
+  const active = status?.ai_available && status.analysis_mode !== "rules_only";
 
   // ---- provider profile handlers ----
 
@@ -600,7 +600,9 @@ export function SettingsView() {
                   ? status.api_key_from_db
                     ? t("settings.ai.keyFromDb")
                     : t("settings.ai.keyFromEnv")
-                  : t("settings.ai.keyNotSet")}
+                  : status.ai_available
+                    ? t("settings.ai.keyNotRequired")
+                    : t("settings.ai.keyNotSet")}
               </span>
             )}
             {status?.base_url && (

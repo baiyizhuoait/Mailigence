@@ -61,10 +61,9 @@ async def _llm_json(cfg: AiConfig, system_prompt: str, user_content: str) -> lis
         content = "".join(block.get("text", "") for block in data.get("content", []))
         return _parse_json_array(content)
 
-    headers = {
-        "Authorization": f"Bearer {cfg.api_key}",
-        "Content-Type": "application/json",
-    }
+    headers = {"Content-Type": "application/json"}
+    if cfg.api_key:
+        headers["Authorization"] = f"Bearer {cfg.api_key}"
     body = {
         "model": cfg.model,
         "messages": [

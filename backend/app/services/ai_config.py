@@ -18,6 +18,7 @@ embedding model) stay on the single-row ``app_settings`` table.
 """
 from __future__ import annotations
 
+import ipaddress
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from urllib.parse import urlparse
@@ -54,7 +55,11 @@ class AiConfig:
         """True when the current mode actually calls the LLM."""
         if self.analysis_mode == "rules_only":
             return False
-        return bool(self.api_key and self.base_url and self.model)
+        if not (self.base_url and self.model):
+            return False
+        # Local inference servers (Ollama / LM Studio / vLLM) are normally
+        # unauthenticated; the README tells users to leave the key empty there.
+        return bool(self.api_key) or is_local_endpoint(self.base_url)
 
     @property
     def effective_mode(self) -> str:
@@ -88,7 +93,9 @@ class AiConfig:
         """
         if self.analysis_mode == "rules_only" or self.provider == "anthropic":
             return False
-        return bool(self.api_key and self.base_url and self.effective_embedding_model)
+        if not (self.base_url and self.effective_embedding_model):
+            return False
+        return bool(self.api_key) or is_local_endpoint(self.base_url)
 
 
 def _host_of(url: str) -> str:
@@ -97,6 +104,34 @@ def _host_of(url: str) -> str:
         return (urlparse(url or "").hostname or "").lower()
     except ValueError:
         return ""
+
+
+_LOCAL_HOSTNAMES = {
+    "localhost",
+    "127.0.0.1",
+    "::1",
+    "0.0.0.0",
+    "host.docker.internal",
+}
+
+
+def is_local_endpoint(url: str) -> bool:
+    """True for loopback / private-network inference servers.
+
+    These runtimes usually accept requests without an API key, so treating an
+    empty key as "AI not configured" would contradict the documented setup
+    ("API 密钥：留空"). A public host still requires a key.
+    """
+    host = _host_of(url)
+    if not host:
+        return False
+    if host in _LOCAL_HOSTNAMES or host.endswith(".local"):
+        return True
+    try:
+        addr = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return addr.is_loopback or addr.is_private
 
 
 def env_key_allowed_for(base_url: str, provider: str | None = None) -> bool:

@@ -349,6 +349,8 @@ async def send_reply(
     if orig_mid and f"<{orig_mid}>" not in refs:
         refs = f"{refs} <{orig_mid}>" if refs else f"<{orig_mid}>"
 
+    sent_id: int | None = None
+    mid = ""
     try:
         credential = await resolve_credential(account)
         if account.auth_type == AuthType.OAUTH_MICROSOFT:
@@ -356,28 +358,49 @@ async def send_reply(
             # local SENT row (it would duplicate the synced copy); the reply
             # shows up on the next "sync sent" pass in the reply-tracking view.
             await smtp_sender.send_via_graph(credential, to_addr, subject, content)
-            sent_id = None
         else:
             msg, mid = smtp_sender.build_reply_message(
                 account.email, to_addr, subject, content, orig_mid, refs
             )
             await smtp_sender.send_via_smtp(account, credential, msg)
-            sent_id = await _insert_sent_row(
-                db, account, email, subject, content, mid, refs, orig_mid
-            )
     except Exception as exc:
         raise HTTPException(
             status_code=502, detail=smtp_sender.friendly_send_error(exc)
         ) from exc
 
-    if not email.has_reply:
-        email.has_reply = True
-    # Replied mail is done — set handled_at at the source so the dashboard and
-    # reply queue drop it without needing a write on every /pending read.
-    if email.handled_at is None:
-        email.handled_at = datetime.now(timezone.utc)
-    await db.commit()
-    return {"ok": True, "sent_id": sent_id}
+    # Past this point the mail is already on the wire. A local bookkeeping
+    # failure must not be reported as "send failed": the user would retry and
+    # deliver a duplicate. Degrade to a warning instead.
+    warning = ""
+    if account.auth_type != AuthType.OAUTH_MICROSOFT:
+        try:
+            sent_id = await _insert_sent_row(
+                db, account, email, subject, content, mid, refs, orig_mid
+            )
+        except Exception:
+            await db.rollback()
+            warning = "邮件已发送，但本地「已发送」记录写入失败；请勿重复发送。"
+
+    try:
+        await db.execute(
+            update(UnifiedEmail)
+            .where(UnifiedEmail.id == email_id)
+            .values(
+                has_reply=True,
+                # Replied mail is done — stamp it at the source so the dashboard
+                # and reply queue drop it without a write on every /pending
+                # read. Keep an existing stamp.
+                handled_at=func.coalesce(
+                    UnifiedEmail.handled_at, datetime.now(timezone.utc)
+                ),
+            )
+        )
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        warning = warning or "邮件已发送，但本地状态更新失败；请勿重复发送。"
+
+    return {"ok": True, "sent_id": sent_id, "warning": warning or None}
 
 
 async def _insert_sent_row(

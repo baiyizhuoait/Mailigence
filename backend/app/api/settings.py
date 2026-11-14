@@ -48,6 +48,9 @@ class AiSettingsOut(BaseModel):
     # Never send the key back; only whether one is configured and its origin.
     api_key_configured: bool
     api_key_from_db: bool
+    # Whether AI calls are actually possible. A local endpoint (Ollama /
+    # LM Studio) needs no key, so this is not the same as api_key_configured.
+    ai_available: bool
     # The .env fallback values, so the UI can show what env provides.
     env_provider: str
     env_base_url: str
@@ -69,6 +72,7 @@ async def get_ai_settings(db: AsyncSession = Depends(get_db)) -> AiSettingsOut:
         model=cfg.model,
         api_key_configured=bool(cfg.api_key),
         api_key_from_db=cfg.api_key_from_db,
+        ai_available=cfg.use_ai,
         env_provider=env_provider,
         env_base_url=env_url,
         env_model=env_model,

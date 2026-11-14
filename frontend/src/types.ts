@@ -371,6 +371,8 @@ export interface AiSettings {
   model: string;
   api_key_configured: boolean;
   api_key_from_db: boolean;
+  // True when AI calls can run; local endpoints need no key.
+  ai_available: boolean;
   env_provider: string;
   env_base_url: string;
   env_model: string;

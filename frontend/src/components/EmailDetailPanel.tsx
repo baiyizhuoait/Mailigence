@@ -108,7 +108,7 @@ export function EmailDetailPanel({ emailId, onClose, onReadChange }: Props) {
   useEffect(() => {
     api
       .getAiSettings()
-      .then((s) => setAiAvailable(s.api_key_configured && s.analysis_mode !== "rules_only"))
+      .then((s) => setAiAvailable(s.ai_available && s.analysis_mode !== "rules_only"))
       .catch(() => setAiAvailable(true));
   }, []);
 

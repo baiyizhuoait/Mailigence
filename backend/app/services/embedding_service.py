@@ -83,10 +83,9 @@ async def embed_text(cfg: AiConfig, text_value: str) -> list[float]:
             "且不是 OpenAI 官方端点，无法自动选用默认模型。"
         )
     url = cfg.base_url.rstrip("/") + "/embeddings"
-    headers = {
-        "Authorization": f"Bearer {cfg.api_key}",
-        "Content-Type": "application/json",
-    }
+    headers = {"Content-Type": "application/json"}
+    if cfg.api_key:
+        headers["Authorization"] = f"Bearer {cfg.api_key}"
     body = {"model": model, "input": text_value}
     resp = await http_client.client.post(url, headers=headers, json=body, timeout=EMBED_TIMEOUT)
     if resp.status_code != 200:

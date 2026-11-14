@@ -86,6 +86,11 @@ class Settings(BaseSettings):
     # per-visitor hourly and instance-wide daily. 0 disables the cap.
     demo_ai_daily_limit: int = 300
     demo_ai_ip_hourly_limit: int = 20
+    # Read the visitor IP from cf-connecting-ip / x-forwarded-for. Enable this
+    # only behind a proxy that overwrites those headers (Cloudflare Tunnel,
+    # nginx with proxy_set_header). Left off, a visitor could spoof a new IP on
+    # every request and get a fresh hourly AI budget each time.
+    demo_trust_proxy_headers: bool = False
 
     # OAuth2 providers
     google_oauth_client_id: str = ""

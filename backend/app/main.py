@@ -264,11 +264,17 @@ def _demo_is_ai_request(request: Request) -> bool:
 
 
 def _demo_visitor_ip(request: Request) -> str:
-    """Visitor identity behind a tunnel (Cloudflare / generic proxy header)."""
-    for header in ("cf-connecting-ip", "x-forwarded-for"):
-        value = request.headers.get(header, "").split(",")[0].strip()
-        if value:
-            return value
+    """Visitor identity for the hourly AI budget.
+
+    Proxy headers are honoured only when explicitly trusted: on a directly
+    exposed instance a visitor could otherwise send a different
+    ``cf-connecting-ip`` on every request and reset the hourly budget.
+    """
+    if settings.demo_trust_proxy_headers:
+        for header in ("cf-connecting-ip", "x-forwarded-for"):
+            value = request.headers.get(header, "").split(",")[0].strip()
+            if value:
+                return value
     return request.client.host if request.client else "unknown"
 
 
@@ -328,6 +334,7 @@ async def demo_guard(request: Request, call_next):
     if request.url.path == "/api/health":
         return await call_next(request)
 
+    issue_cookie = False
     token = settings.demo_access_token
     if token:
         supplied = request.query_params.get("token") or request.cookies.get(_DEMO_COOKIE)
@@ -337,13 +344,10 @@ async def demo_guard(request: Request, call_next):
                     {"detail": "Demo access token required"}, status_code=401
                 )
             return HTMLResponse(_DEMO_GATE_FORM, status_code=401)
-        if request.query_params.get("token"):
-            response = await call_next(request)
-            # 7 days: long enough for a reviewer session, short enough to expire.
-            response.set_cookie(
-                _DEMO_COOKIE, token, httponly=True, samesite="lax", max_age=604800
-            )
-            return response
+        # A matching ?token= logs the visitor in, but must still clear the write
+        # block and AI budget below. Returning early here let anyone holding the
+        # token bypass both by re-sending ?token= on every request.
+        issue_cookie = bool(request.query_params.get("token"))
 
     if request.method in {"POST", "PUT", "PATCH", "DELETE"} and (
         request.url.path.startswith(_DEMO_BLOCKED_PREFIXES)
@@ -370,7 +374,13 @@ async def demo_guard(request: Request, call_next):
         if reason:
             return JSONResponse({"detail": reason}, status_code=429)
 
-    return await call_next(request)
+    response = await call_next(request)
+    if issue_cookie:
+        # 7 days: long enough for a reviewer session, short enough to expire.
+        response.set_cookie(
+            _DEMO_COOKIE, token, httponly=True, samesite="lax", max_age=604800
+        )
+    return response
 
 
 @app.get("/api/health")

@@ -677,10 +677,9 @@ async def _openai_chat(
             cfg, user_content, system_prompt, max_tokens=max_tokens, json_mode=json_mode, timeout=timeout
         )
 
-    headers = {
-        "Authorization": f"Bearer {cfg.api_key}",
-        "Content-Type": "application/json",
-    }
+    headers = {"Content-Type": "application/json"}
+    if cfg.api_key:
+        headers["Authorization"] = f"Bearer {cfg.api_key}"
     body = {
         "model": cfg.model,
         "messages": [
@@ -770,10 +769,9 @@ async def _openai_chat_stream(
     timeout: float = 120,
 ):
     """OpenAI-compatible ``stream=True`` SSE deltas (GLM / DeepSeek / Kimi ...)."""
-    headers = {
-        "Authorization": f"Bearer {cfg.api_key}",
-        "Content-Type": "application/json",
-    }
+    headers = {"Content-Type": "application/json"}
+    if cfg.api_key:
+        headers["Authorization"] = f"Bearer {cfg.api_key}"
     body = {
         "model": cfg.model,
         "messages": [

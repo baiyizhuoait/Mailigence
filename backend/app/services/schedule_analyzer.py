@@ -355,10 +355,9 @@ async def _analyze_with_llm(
 async def _openai_schedule(
     cfg: AiConfig, system_prompt: str, user_content: str
 ) -> dict:
-    headers = {
-        "Authorization": f"Bearer {cfg.api_key}",
-        "Content-Type": "application/json",
-    }
+    headers = {"Content-Type": "application/json"}
+    if cfg.api_key:
+        headers["Authorization"] = f"Bearer {cfg.api_key}"
     body = {
         "model": cfg.model,
         "messages": [
