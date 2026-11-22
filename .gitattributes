@@ -1,0 +1,4 @@
+# Shell scripts must always be checked out with LF. A CRLF shebang line makes
+# the container die with "/bin/sh^M: bad interpreter", and on Windows git's
+# autocrlf is enough to introduce one (this broke backend/entrypoint.sh once).
+*.sh text eol=lf
