@@ -369,5 +369,5 @@ MIT
 ---
 
 <p align="center">
-  用 💛 构建 · <a href="https://github.com/baiyizhuoait-ui/Mailigence">GitHub</a>
+  用 💛 构建 · <a href="https://github.com/baiyizhuoait/Mailigence">GitHub</a>
 </p>
