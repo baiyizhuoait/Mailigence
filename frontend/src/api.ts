@@ -37,9 +37,38 @@ import type {
 } from "./types";
 
 const BASE = "/api";
+const DEMO_TOKEN_KEY = "mailigence_demo_token";
+
+/**
+ * The demo entry link carries ``?token=...``, but the SPA shell is served as a
+ * static file, so that request never reaches the backend and the demo cookie
+ * is never issued. Capture the token once and attach it to API calls; the
+ * backend then sets the session cookie on the first authenticated request.
+ */
+function captureDemoToken(): void {
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get("token");
+    if (fromUrl) sessionStorage.setItem(DEMO_TOKEN_KEY, fromUrl);
+  } catch {
+    /* sessionStorage can be blocked; the cookie path still works */
+  }
+}
+
+function apiUrl(path: string): string {
+  let token = "";
+  try {
+    token = sessionStorage.getItem(DEMO_TOKEN_KEY) ?? "";
+  } catch {
+    /* ignore */
+  }
+  if (!token) return BASE + path;
+  return `${BASE}${path}${path.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
+}
+
+captureDemoToken();
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const resp = await fetch(BASE + path, {
+  const resp = await fetch(apiUrl(path), {
     headers: { "Content-Type": "application/json" },
     ...init,
   });
@@ -464,7 +493,7 @@ export const api = {
       }) => void;
     },
   ) => {
-    const resp = await fetch(BASE + "/chat/stream", {
+    const resp = await fetch(apiUrl("/chat/stream"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
