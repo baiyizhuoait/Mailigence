@@ -48,8 +48,10 @@ async def list_emails(
     starred_only: bool = False,
     archived: bool = False,
     is_advertisement: bool | None = None,
-    limit: int = Query(100, le=500),
-    offset: int = 0,
+    # Both bounds are required: PostgreSQL rejects negative LIMIT/OFFSET, and
+    # without ge=0 those values reached the query as-is and surfaced as a 500.
+    limit: int = Query(100, ge=0, le=500),
+    offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ) -> EmailListResponse:
     """List unified emails, newest first. Filters compose.
