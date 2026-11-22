@@ -139,6 +139,22 @@ def _message_id(index: int) -> str:
     return f"<demo-{index:03d}@{DEMO_DOMAIN}>"
 
 
+def _past_instant(now: datetime, days_ago: int, hour: int, minute: int) -> datetime:
+    """A demo timestamp that is guaranteed to lie in the past.
+
+    ``now - days_ago`` picks the day, but the fixed ``hour`` can still be ahead
+    of the current UTC time when ``days_ago == 0``. That seeded mail "received"
+    hours in the future, which the list and the "today" counters then showed as
+    if time ran backwards. Clamp those to a few minutes ago instead.
+    """
+    stamp = (now - timedelta(days=days_ago)).replace(
+        hour=hour, minute=minute, second=0, microsecond=0
+    )
+    if stamp >= now:
+        stamp = now - timedelta(minutes=5 + minute % 50)
+    return stamp
+
+
 async def _ensure_categories(db: AsyncSession) -> None:
     existing = {
         name
@@ -192,9 +208,7 @@ async def seed_demo_data(db: AsyncSession) -> int:
         acct_idx, days_ago, hour, sender, addr, subject, snippet,
         category, priority, action, is_ad, is_read, handled_days_ago,
     ) in _MAILS:
-        received = (now - timedelta(days=days_ago)).replace(
-            hour=hour, minute=(index * 7) % 60, second=0, microsecond=0
-        )
+        received = _past_instant(now, days_ago, hour, (index * 7) % 60)
         handled = (
             None
             if handled_days_ago is None
@@ -236,9 +250,7 @@ async def seed_demo_data(db: AsyncSession) -> int:
         acct_idx = filler_idx % len(accounts)
         days_ago = filler_idx % 13
         hour = 7 + (filler_idx * 3) % 14
-        received = (now - timedelta(days=days_ago)).replace(
-            hour=hour, minute=(filler_idx * 13) % 60, second=0, microsecond=0
-        )
+        received = _past_instant(now, days_ago, hour, (filler_idx * 13) % 60)
         snippet = "这是一封演示用的订阅/推广邮件，用于展示批量归类与广告过滤效果。"
         mails.append(
             UnifiedEmail(

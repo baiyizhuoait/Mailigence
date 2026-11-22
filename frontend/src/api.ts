@@ -47,8 +47,15 @@ const DEMO_TOKEN_KEY = "mailigence_demo_token";
  */
 function captureDemoToken(): void {
   try {
-    const fromUrl = new URLSearchParams(window.location.search).get("token");
-    if (fromUrl) sessionStorage.setItem(DEMO_TOKEN_KEY, fromUrl);
+    const url = new URL(window.location.href);
+    const fromUrl = url.searchParams.get("token");
+    if (!fromUrl) return;
+    sessionStorage.setItem(DEMO_TOKEN_KEY, fromUrl);
+    // Strip it from the address bar once captured: otherwise the secret stays
+    // in browser history, screenshots and any outbound Referer for the whole
+    // session even though every request already carries it from storage.
+    url.searchParams.delete("token");
+    window.history.replaceState(null, "", url.toString());
   } catch {
     /* sessionStorage can be blocked; the cookie path still works */
   }
