@@ -16,6 +16,16 @@ Mailigence 是一个自托管的邮件聚合与 AI 分析工具。将 Gmail / Ou
   <sub>截图使用内置演示数据，不含任何真实邮件</sub>
 </p>
 
+<p align="center">
+  <a href="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/media/mailigence-demo-720p.mp4">
+    <img src="docs/media/video-poster.jpg" alt="播放 Mailigence 5 分钟演示视频" width="740">
+  </a>
+</p>
+
+<p align="center">
+  <sub>▶ 点击封面播放 5 分钟演示视频 · 12 MB · 浏览器内直接播放</sub>
+</p>
+
 ## ⏱️ 30 秒看懂
 
 1. **接入** —— 用应用专用密码或 OAuth2 接入 Gmail / Outlook / QQ / 163，任意 IMAP 邮箱均可。

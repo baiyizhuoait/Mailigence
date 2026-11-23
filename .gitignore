@@ -38,3 +38,5 @@ Thumbs.db
 
 # ---- Misc ----
 *.log
+# Full-resolution source video; the repo ships the compressed 720p cut
+/mailigence_demo_5min.mp4

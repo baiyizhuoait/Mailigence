@@ -16,6 +16,16 @@ Mailigence is a self-hosted email aggregation and AI analysis tool. It brings Gm
   <sub>Screenshots use the built-in demo dataset and contain no real email</sub>
 </p>
 
+<p align="center">
+  <a href="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/media/mailigence-demo-720p.mp4">
+    <img src="docs/media/video-poster.jpg" alt="Play the 5-minute Mailigence demo" width="740">
+  </a>
+</p>
+
+<p align="center">
+  <sub>▶ Click the cover to play the 5-minute demo · 12 MB · plays in the browser</sub>
+</p>
+
 ## ⏱️ Understand it in 30 seconds
 
 1. **Connect** — Gmail / Outlook / QQ / 163 via app-specific password or OAuth2; any IMAP mailbox works.
