@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mailigence — Every mailbox. One quiet morning.</title>
+<meta name="description" content="Self-hosted AI email dashboard. Gmail, Outlook, QQ and 163 in one place — classified, scored and scheduled. Your mail and credentials never leave your machine.">
+<meta property="og:title" content="Mailigence — Every mailbox. One quiet morning.">
+<meta property="og:description" content="Self-hosted AI email dashboard. Gmail, Outlook, QQ and 163 in one place — classified, scored and scheduled.">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/screenshots/dashboard.en.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/frontend/public/icon-192.png">
+<style>
+  :root{
+    --bg:#14171a; --panel:#1a1e23; --panel-2:#0f1216;
+    --line:#2a2f37; --line-soft:#232830;
+    --text:#e8e5de; --dim:#8b919b; --faint:#5c636e;
+    --accent:#e8b04b; --accent-soft:rgba(232,176,75,.12);
+    --sans:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",Roboto,Helvetica,Arial,sans-serif;
+    --serif:Georgia,"Times New Roman","Songti SC","STSong",SimSun,serif;
+    --mono:ui-monospace,"Cascadia Mono",Consolas,"Courier New",monospace;
+    --w:1120px;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); font-size:17px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  img{max-width:100%;display:block}
+  a{color:inherit}
+  h1,h2,h3{font-family:var(--serif); font-weight:400; letter-spacing:-.01em; margin:0; text-wrap:balance}
+  p{margin:0}
+  .wrap{width:min(100% - 40px,var(--w)); margin-inline:auto}
+  .skip{position:absolute;left:-9999px;top:0;background:var(--accent);color:#14171a;padding:10px 16px;z-index:99}
+  .skip:focus{left:12px;top:12px}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+  section{scroll-margin-top:84px}
+
+  /* ---------- header ---------- */
+  .top{
+    position:sticky;top:0;z-index:50;
+    background:rgba(20,23,26,.86);
+    -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .top-in{display:flex;align-items:center;gap:28px;height:64px}
+  .brand{font-family:var(--serif);font-size:20px;letter-spacing:.01em;text-decoration:none}
+  .brand span{color:var(--accent)}
+  .nav{display:flex;gap:26px;margin-left:auto;font-size:14px}
+  .nav a{color:var(--dim);text-decoration:none;transition:color .18s}
+  .nav a:hover{color:var(--text)}
+  .top-act{display:flex;align-items:center;gap:12px;margin-left:auto}
+  .nav + .top-act{margin-left:0}
+  .lang{
+    background:none;border:1px solid var(--line);color:var(--dim);
+    font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+    padding:7px 11px;border-radius:5px;cursor:pointer;transition:.18s;
+  }
+  .lang:hover{color:var(--text);border-color:var(--dim)}
+
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;
+    background:var(--accent);color:#14171a;text-decoration:none;
+    font-weight:600;font-size:14.5px;letter-spacing:.01em;
+    padding:12px 20px;border-radius:6px;border:1px solid var(--accent);
+    transition:background .18s,transform .18s,box-shadow .18s;
+  }
+  .btn:hover{background:#f0bd63;box-shadow:0 8px 24px rgba(232,176,75,.18)}
+  .btn-sm{padding:8px 14px;font-size:13px}
+  .btn-ghost{
+    background:transparent;color:var(--text);border:1px solid var(--line);
+    font-weight:500;
+  }
+  .btn-ghost:hover{background:var(--panel);border-color:var(--dim);box-shadow:none}
+
+  /* ---------- hero ---------- */
+  .hero{padding:76px 0 64px}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:center}
+  .eyebrow{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:22px;
+  }
+  h1{font-size:clamp(38px,5.2vw,62px);line-height:1.06;margin-bottom:24px}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{font-size:18.5px;color:var(--dim);max-width:46ch;line-height:1.7}
+  .lede strong{color:var(--text);font-weight:500}
+  .cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
+  .meta{
+    margin-top:26px;font-family:var(--mono);font-size:12px;
+    color:var(--faint);letter-spacing:.03em;
+  }
+  .shot{
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;
+    background:var(--panel);box-shadow:0 32px 80px rgba(0,0,0,.5);
+  }
+  .shot img{width:100%;height:auto}
+
+  /* ---------- steps ---------- */
+  .steps{border-top:1px solid var(--line-soft);padding:56px 0 64px}
+  .steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:36px}
+  .step .n{
+    font-family:var(--mono);font-size:11px;color:var(--accent);
+    letter-spacing:.12em;display:block;margin-bottom:14px;
+  }
+  .step h3{font-size:19px;margin-bottom:8px}
+  .step p{font-size:14.5px;color:var(--dim);line-height:1.6}
+
+  /* ---------- split feature ---------- */
+  .split{padding:80px 0;border-top:1px solid var(--line-soft)}
+  .split-grid{display:grid;grid-template-columns:1fr 430px;gap:72px;align-items:start}
+  .split h2{font-size:clamp(28px,3.4vw,38px);line-height:1.16;margin-bottom:20px;max-width:20ch}
+  .split .body{color:var(--dim);font-size:16.5px;max-width:48ch}
+  .facts{list-style:none;padding:0;margin:30px 0 0;border-top:1px solid var(--line-soft)}
+  .facts li{
+    display:flex;justify-content:space-between;gap:24px;
+    padding:13px 0;border-bottom:1px solid var(--line-soft);font-size:14.5px;
+  }
+  .facts .k{font-family:var(--mono);font-size:12.5px;color:var(--faint);letter-spacing:.05em}
+  .facts .v{color:var(--text);text-align:right}
+  .split .shot{position:sticky;top:92px}
+
+  /* ---------- ledger ---------- */
+  .ledger{padding:0 0 80px}
+  .ledger-row{
+    display:grid;grid-template-columns:190px 1fr;gap:32px;
+    padding:34px 0;border-top:1px solid var(--line-soft);align-items:start;
+  }
+  .ledger-row .tag{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--accent);padding-top:5px;
+  }
+  .ledger-row h3{font-size:22px;margin-bottom:8px}
+  .ledger-row p{color:var(--dim);font-size:15.5px;max-width:62ch}
+
+  /* ---------- band ---------- */
+  .band{padding:0 0 88px}
+  .band .shot{box-shadow:0 40px 100px rgba(0,0,0,.55)}
+  .band figcaption{
+    margin-top:16px;font-family:var(--mono);font-size:11.5px;
+    color:var(--faint);letter-spacing:.04em;text-align:center;
+  }
+
+  /* ---------- video ---------- */
+  .video{padding:78px 0;border-top:1px solid var(--line-soft)}
+  .video-head{text-align:center;max-width:640px;margin:0 auto 40px}
+  .video-head h2{font-size:clamp(27px,3.4vw,36px);margin-bottom:12px}
+  .video-head p{color:var(--dim);font-size:15.5px}
+  .player{
+    position:relative;display:block;border:1px solid var(--line);
+    border-radius:10px;overflow:hidden;background:var(--panel-2);
+    max-width:820px;margin-inline:auto;text-decoration:none;
+  }
+  .player img{width:100%;height:auto;opacity:.86;transition:opacity .2s}
+  .player:hover img{opacity:1}
+  .player .badge{position:absolute;inset:0;display:grid;place-items:center}
+  .player .pill{
+    display:inline-flex;align-items:center;gap:10px;
+    background:rgba(20,23,26,.88);border:1px solid rgba(232,176,75,.5);
+    color:var(--text);font-family:var(--mono);font-size:12px;letter-spacing:.09em;
+    padding:12px 20px;border-radius:999px;transition:background .2s,border-color .2s,color .2s,transform .2s;
+  }
+  .player .pill svg{width:12px;height:13px;fill:var(--accent);transition:fill .2s}
+  .player:hover .pill{background:var(--accent);border-color:var(--accent);color:#14171a;transform:translateY(-1px)}
+  .player:hover .pill svg{fill:#14171a}
+  .player video{width:100%;display:block;background:#000}
+
+  /* ---------- privacy ---------- */
+  .privacy{padding:80px 0;border-top:1px solid var(--line-soft)}
+  .privacy h2{font-size:clamp(27px,3.4vw,36px);max-width:22ch;margin-bottom:48px}
+  .privacy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+  .privacy-item{padding:0 32px;border-left:1px solid var(--line-soft)}
+  .privacy-item:first-child{padding-left:0;border-left:0}
+  .privacy-item h3{font-size:17px;margin-bottom:10px}
+  .privacy-item p{font-size:14.5px;color:var(--dim)}
+
+  /* ---------- self host ---------- */
+  .host{padding:80px 0;border-top:1px solid var(--line-soft)}
+  .host-grid{display:grid;grid-template-columns:1fr 1.05fr;gap:64px;align-items:center}
+  .host h2{font-size:clamp(27px,3.4vw,36px);margin-bottom:18px}
+  .host p{color:var(--dim);font-size:15.5px;max-width:44ch}
+  .host .note{
+    margin-top:22px;padding-left:14px;border-left:2px solid var(--accent);
+    font-size:14px;color:var(--dim);
+  }
+  .terminal{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    overflow:hidden;
+  }
+  .term-bar{
+    display:flex;align-items:center;gap:7px;padding:11px 14px;
+    border-bottom:1px solid var(--line-soft);
+    font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.08em;
+  }
+  .dot{width:9px;height:9px;border-radius:50%;background:#3a4048}
+  .term-body{padding:20px 22px;font-family:var(--mono);font-size:13px;line-height:2;overflow-x:auto}
+  .term-body .p{color:var(--accent);user-select:none}
+  .term-body .c{color:var(--dim)}
+  .term-body .cmd{color:var(--text);white-space:nowrap}
+
+  /* ---------- faq ---------- */
+  .faq{padding:76px 0;border-top:1px solid var(--line-soft)}
+  .faq h2{font-size:clamp(26px,3.2vw,34px);margin-bottom:36px}
+  .faq details{border-top:1px solid var(--line-soft);padding:20px 0}
+  .faq details:last-of-type{border-bottom:1px solid var(--line-soft)}
+  .faq summary{
+    cursor:pointer;list-style:none;font-size:16.5px;
+    display:flex;justify-content:space-between;gap:24px;align-items:baseline;
+  }
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{content:"+";font-family:var(--mono);color:var(--accent);font-size:18px}
+  .faq details[open] summary::after{content:"–"}
+  .faq details p{margin-top:14px;color:var(--dim);font-size:15px;max-width:70ch}
+
+  /* ---------- close ---------- */
+  .close{padding:96px 0 104px;border-top:1px solid var(--line-soft);text-align:center}
+  .close h2{font-size:clamp(30px,4.2vw,46px);margin-bottom:14px}
+  .close p{color:var(--dim);margin-bottom:32px}
+
+  footer{border-top:1px solid var(--line-soft);padding:30px 0 44px;font-size:13px;color:var(--faint)}
+  .foot-in{display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:center}
+  .foot-links{display:flex;gap:22px}
+  .foot-links a{color:var(--dim);text-decoration:none}
+  .foot-links a:hover{color:var(--text)}
+
+  @media (max-width:940px){
+    .nav{display:none}
+    .hero{padding:52px 0 48px}
+    .hero-grid{grid-template-columns:1fr;gap:44px}
+    .steps-grid{grid-template-columns:repeat(2,1fr);gap:30px}
+    .split-grid{grid-template-columns:1fr;gap:44px}
+    .split .shot{position:static;order:2;max-width:520px}
+    .ledger-row{grid-template-columns:1fr;gap:10px}
+    .privacy-grid{grid-template-columns:1fr;gap:28px}
+    .privacy-item{padding:0 0 0 16px;border-left:1px solid var(--line-soft)}
+    .privacy-item:first-child{padding-left:16px;border-left:1px solid var(--line-soft)}
+    .host-grid{grid-template-columns:1fr;gap:40px}
+  }
+  @media (max-width:560px){
+    body{font-size:16px}
+    .steps-grid{grid-template-columns:1fr}
+    .cta-row .btn{width:100%;justify-content:center}
+    .term-body{font-size:11.5px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *{transition:none!important;animation:none!important}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="#top">Mailigence<span>.</span></a>
+    <nav class="nav" aria-label="Primary">
+      <a href="#features" data-i18n="nav.features">Features</a>
+      <a href="#demo" data-i18n="nav.demo">Demo</a>
+      <a href="#self-host" data-i18n="nav.host">Self-host</a>
+      <a href="#faq" data-i18n="nav.faq">FAQ</a>
+    </nav>
+    <div class="top-act">
+      <button class="lang" id="lang" type="button" aria-label="Switch language">中文</button>
+      <a class="btn btn-sm" href="https://demo.mailigence.online/?token=5i4ysao0f7kv2b9utepgmj1l" data-i18n="cta.demo">Live demo</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero" id="top">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow" data-i18n="hero.eyebrow">Self-hosted · Open source · MIT</div>
+        <h1 data-i18n-html="hero.h1">Every mailbox.<br>One <em>quiet</em> morning.</h1>
+        <p class="lede" data-i18n-html="hero.lede">Mailigence pulls Gmail, Outlook, QQ and 163 into a single dashboard, then lets AI sort them, score what matters, pull out your schedule and draft the reply. It runs on <strong>your own machine</strong> — your mail and credentials never leave it.</p>
+        <div class="cta-row">
+          <a class="btn" href="https://demo.mailigence.online/?token=5i4ysao0f7kv2b9utepgmj1l" data-i18n="cta.demo">Live demo</a>
+          <a class="btn btn-ghost" href="https://github.com/baiyizhuoait/Mailigence" rel="noopener" data-i18n="cta.gh">Self-host it →</a>
+        </div>
+        <div class="meta" data-i18n="hero.meta">67 demo emails · 4 mailboxes · no signup</div>
+      </div>
+      <div class="shot">
+        <img id="shot-hero"
+             src="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/screenshots/dashboard.en.png"
+             data-en="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/screenshots/dashboard.en.png"
+             data-zh="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/screenshots/dashboard.png"
+             alt="Mailigence dashboard with AI briefing, schedule and priority queue" fetchpriority="high" decoding="async">
+      </div>
+    </div>
+  </section>
+
+  <section class="steps">
+    <div class="wrap steps-grid">
+      <div class="step">
+        <span class="n">01</span>
+        <h3 data-i18n="step1.t">Connect</h3>
+        <p data-i18n="step1.b">Gmail, Outlook, QQ, 163 or any IMAP server. App passwords or OAuth2.</p>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <h3 data-i18n="step2.t">Classify</h3>
+        <p data-i18n="step2.b">Every mail gets a category, a 0–100 priority and one suggested action.</p>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <h3 data-i18n="step3.t">Act</h3>
+        <p data-i18n="step3.b">A priority queue, an AI briefing and a schedule — only what needs you today.</p>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <h3 data-i18n="step4.t">Own it</h3>
+        <p data-i18n="step4.b">Docker + PostgreSQL on your own box. Credentials encrypted at rest.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="split" id="features">
+    <div class="wrap split-grid">
+      <div>
+        <h2 data-i18n="feat1.h">It has already read the inbox before you open it.</h2>
+        <p class="body" data-i18n="feat1.b">Each message is classified, scored and given an action the moment it lands — including the ads, which leave on their own.</p>
+        <ul class="facts">
+          <li><span class="k" data-i18n="feat1.k1">DAILY BRIEF</span><span class="v" data-i18n="feat1.v1">What needs you today, in one paragraph</span></li>
+          <li><span class="k" data-i18n="feat1.k2">SCHEDULE</span><span class="v" data-i18n="feat1.v2">Meetings and deadlines, extracted from prose</span></li>
+          <li><span class="k" data-i18n="feat1.k3">QUEUE</span><span class="v" data-i18n="feat1.v3">Ranked, estimated, and cleared as you go</span></li>
+        </ul>
+      </div>
+      <div class="shot">
+        <img id="shot-queue"
+             src="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/screenshots/queue.en.png"
+             data-en="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/screenshots/queue.en.png"
+             data-zh="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/screenshots/queue.png"
+             alt="AI advisor card with the daily brief, priority mail and schedule" loading="lazy" decoding="async">
+      </div>
+    </div>
+  </section>
+
+  <section class="ledger">
+    <div class="wrap">
+      <div class="ledger-row">
+        <div class="tag" data-i18n="feat2.tag">AI Q&amp;A</div>
+        <div>
+          <h3 data-i18n="feat2.h">Ask across all four mailboxes. Get citations, not guesses.</h3>
+          <p data-i18n="feat2.b">Answers are grounded in retrieved mail snippets, and every claim links back to the message it came from — click a citation card to open the original.</p>
+        </div>
+      </div>
+      <div class="ledger-row">
+        <div class="tag" data-i18n="feat3.tag">Replies</div>
+        <div>
+          <h3 data-i18n="feat3.h">Reply without leaving the tab.</h3>
+          <p data-i18n="feat3.b">AI drafts one or two editable replies. QQ, 163 and IMAP accounts send straight from the app; Outlook goes through Microsoft Graph.</p>
+        </div>
+      </div>
+      <div class="ledger-row">
+        <div class="tag" data-i18n="feat4.tag">Noise</div>
+        <div>
+          <h3 data-i18n="feat4.h">The ads leave on their own.</h3>
+          <p data-i18n="feat4.b">Marketing mail is detected as it arrives, so the queue only holds what a person wrote to you. Bulk-clean the rest and keep a blocklist for repeat offenders.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <figure style="margin:0">
+        <div class="shot">
+          <img id="shot-band"
+               src="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/screenshots/dashboard.en.png"
+               data-en="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/screenshots/dashboard.en.png"
+               data-zh="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/screenshots/dashboard.png"
+               alt="The Mailigence dashboard bento layout" loading="lazy" decoding="async">
+        </div>
+        <figcaption data-i18n="band.cap">Briefing, schedule, stats and the queue — nothing else.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="video" id="demo">
+    <div class="wrap">
+      <div class="video-head">
+        <h2 data-i18n="video.h">Five minutes, the whole product.</h2>
+        <p data-i18n="video.b">Recorded against the demo dataset. No real mailbox involved.</p>
+      </div>
+      <a class="player" id="player"
+         href="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/media/mailigence-demo-en-720p.mp4"
+         data-href-en="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/media/mailigence-demo-en-720p.mp4"
+         data-href-zh="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/media/mailigence-demo-720p.mp4"
+         target="_blank" rel="noopener">
+        <img id="poster"
+             src="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/media/video-poster-en.jpg"
+             data-en="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/media/video-poster-en.jpg"
+             data-zh="https://cdn.jsdelivr.net/gh/baiyizhuoait/Mailigence@main/docs/media/video-poster.jpg"
+             alt="Mailigence product walkthrough video" loading="lazy" decoding="async">
+        <span class="badge" aria-hidden="true">
+          <span class="pill">
+            <svg viewBox="0 0 20 22"><path d="M0 0l20 11L0 22z"/></svg>
+            <span data-i18n="video.label">Play · 5:00</span>
+          </span>
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <section class="privacy">
+    <div class="wrap">
+      <h2 data-i18n="priv.h">Your mail is not our training data.</h2>
+      <div class="privacy-grid">
+        <div class="privacy-item">
+          <h3 data-i18n="priv1.t">Credentials stay encrypted</h3>
+          <p data-i18n="priv1.b">Passwords and OAuth tokens are sealed with Fernet, and the key lives on your machine — not in a config file you share.</p>
+        </div>
+        <div class="privacy-item">
+          <h3 data-i18n="priv2.t">No telemetry</h3>
+          <p data-i18n="priv2.b">No analytics SDK, no account, no phone-home. The only outbound traffic is the IMAP and AI endpoints you configured.</p>
+        </div>
+        <div class="privacy-item">
+          <h3 data-i18n="priv3.t">Any model, or none</h3>
+          <p data-i18n="priv3.b">Bring DeepSeek, any OpenAI-compatible endpoint, or a local Ollama / LM Studio. Rules-only mode needs no key at all.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="host" id="self-host">
+    <div class="wrap host-grid">
+      <div>
+        <h2 data-i18n="host.h">Three commands, and it's yours.</h2>
+        <p data-i18n="host.b">Docker 24+ is the only requirement — no Python, Node or PostgreSQL to install. On Windows without Docker, double-click <code style="font-family:var(--mono);font-size:.92em;color:var(--text)">start.bat</code>.</p>
+        <p class="note" data-i18n="host.note">Just want a look? Set <code style="font-family:var(--mono);font-size:.95em">DEMO_MODE=1</code> for four fictional mailboxes and ~70 classified emails — no account needed.</p>
+      </div>
+      <div class="terminal">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:8px">bash</span></div>
+        <div class="term-body">
+          <div><span class="p">$</span> <span class="cmd">git clone https://github.com/baiyizhuoait/Mailigence.git</span></div>
+          <div><span class="p">$</span> <span class="cmd">cd Mailigence</span></div>
+          <div><span class="p">$</span> <span class="cmd">cp .env.docker.example .env.docker</span></div>
+          <div><span class="p">$</span> <span class="cmd">docker compose up -d</span></div>
+          <div style="margin-top:10px"><span class="c"># then open http://localhost:5173</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq" id="faq">
+    <div class="wrap">
+      <h2 data-i18n="faq.h">Questions people actually ask</h2>
+      <details>
+        <summary data-i18n="faq1.q">Do I need an AI key to use it?</summary>
+        <p data-i18n="faq1.a">No. Rules-only mode classifies mail without a model. Add a cloud key, or point it at local Ollama, when you want summaries and reply drafts.</p>
+      </details>
+      <details>
+        <summary data-i18n="faq2.q">Which mailboxes are supported?</summary>
+        <p data-i18n="faq2.a">Gmail, Outlook, QQ Mail, 163 and any standard IMAP server. Both app-specific passwords and OAuth2 are supported; SMTP and Microsoft Graph handle sending.</p>
+      </details>
+      <details>
+        <summary data-i18n="faq3.q">Where does my data live?</summary>
+        <p data-i18n="faq3.a">In the PostgreSQL database on your own machine. Only the AI requests you configure leave the box — and you can replace them with a local model.</p>
+      </details>
+      <details>
+        <summary data-i18n="faq4.q">Can I connect my own mailbox to the demo?</summary>
+        <p data-i18n="faq4.a">No. The public demo is read-only with fictional data, so no visitor's credentials ever land on someone else's server. Self-host to connect a real mailbox — it takes three commands.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="close">
+    <div class="wrap">
+      <h2 data-i18n="close.h">Take back the first hour of your day.</h2>
+      <p data-i18n="close.b">Open the demo, or run it on your own machine in five minutes.</p>
+      <a class="btn" href="https://demo.mailigence.online/?token=5i4ysao0f7kv2b9utepgmj1l" data-i18n="cta.demo">Live demo</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-in">
+    <span data-i18n="foot.copy">Mailigence — MIT licensed · FastAPI + React + PostgreSQL</span>
+    <div class="foot-links">
+      <a href="https://github.com/baiyizhuoait/Mailigence" rel="noopener">GitHub</a>
+      <a href="https://github.com/baiyizhuoait/Mailigence/blob/main/README.zh-CN.md" rel="noopener" data-i18n="foot.zh">中文说明</a>
+      <a href="https://demo.mailigence.online/?token=5i4ysao0f7kv2b9utepgmj1l" data-i18n="cta.demo">Live demo</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var I18N = {
+    en: {},
+    zh: {
+      "skip": "跳到正文",
+      "nav.features": "功能",
+      "nav.demo": "演示",
+      "nav.host": "部署",
+      "nav.faq": "常见问题",
+      "cta.demo": "打开在线演示",
+      "cta.gh": "自行部署 →",
+      "hero.eyebrow": "自托管 · 开源 · MIT",
+      "hero.h1": "所有邮箱，<br>一个<em>安静的</em>早晨。",
+      "hero.lede": "Mailigence 把 Gmail、Outlook、QQ、163 收进同一个看板，再由 AI 分类、打分、提取日程、起草回复。它跑在<strong>你自己的机器</strong>上——邮件和授权码都不出本机。",
+      "hero.meta": "67 封演示邮件 · 4 个邮箱 · 无需注册",
+      "step1.t": "连接",
+      "step1.b": "Gmail、Outlook、QQ、163，或任何 IMAP 邮箱。授权码与 OAuth2 都支持。",
+      "step2.t": "分类",
+      "step2.b": "每封邮件自动获得分类、0–100 优先级和一条建议动作。",
+      "step3.t": "处理",
+      "step3.b": "优先级队列、AI 每日简报、自动日程——只留今天真正要你处理的。",
+      "step4.t": "掌控",
+      "step4.b": "Docker + PostgreSQL 跑在自己的机器上，凭据落盘即加密。",
+      "feat1.h": "你打开之前，它已经读完了收件箱。",
+      "feat1.b": "每封邮件落地的那一刻就被分类、打分、给出动作——包括广告，它们会自己离开。",
+      "feat1.k1": "每日简报",
+      "feat1.v1": "今天要你处理的，一段话说完",
+      "feat1.k2": "日程",
+      "feat1.v2": "从正文里抽出会议与截止时间",
+      "feat1.k3": "队列",
+      "feat1.v3": "排好序、估好时，随处理随清空",
+      "feat2.tag": "AI 问答",
+      "feat2.h": "跨四个邮箱提问，拿到的是引用，不是猜测。",
+      "feat2.b": "答案基于检索到的邮件片段，每条结论都能点回原文——点引用卡片直接跳到那封信。",
+      "feat3.tag": "回复",
+      "feat3.h": "不用离开当前页面就能回复。",
+      "feat3.b": "AI 起草一到两版回复；QQ、163 和 IMAP 账号可以直接在应用内发出，Outlook 走 Microsoft Graph。",
+      "feat4.tag": "噪音",
+      "feat4.h": "广告会自己离开。",
+      "feat4.b": "营销邮件在到达时就被识别，队列里只留下真人写给你的信。其余的可批量清理，反复骚扰的进黑名单。",
+      "band.cap": "简报、日程、统计和队列——没有多余的东西。",
+      "video.h": "五分钟，看完整个产品。",
+      "video.b": "在演示数据上录制，不涉及任何真实邮箱。",
+      "video.label": "播放 · 5:00",
+      "priv.h": "你的邮件，不是我们的训练数据。",
+      "priv1.t": "凭据只加密存在本地",
+      "priv1.b": "密码与 OAuth token 用 Fernet 密封，密钥保存在你的机器上，而不是一个会被分享的配置文件里。",
+      "priv2.t": "没有遥测",
+      "priv2.b": "没有统计 SDK，不需要注册账号，不向外上报。唯一的出站流量是你配置的 IMAP 和 AI 接口。",
+      "priv3.t": "任何模型，或者不用模型",
+      "priv3.b": "可以接 DeepSeek、任意 OpenAI 兼容接口，或本地 Ollama / LM Studio；纯规则模式完全不需要 Key。",
+      "host.h": "三条命令，它就属于你了。",
+      "host.b": "只需要 Docker 24+，不用装 Python、Node 或 PostgreSQL。Windows 上不想用 Docker，双击 start.bat 即可。",
+      "host.note": "只想看看？设置 DEMO_MODE=1，自带 4 个虚构邮箱和约 70 封已分类邮件，不需要任何真实账号。",
+      "faq.h": "真实会被问到的问题",
+      "faq1.q": "一定要配 AI Key 吗？",
+      "faq1.a": "不用。纯规则模式不需要模型也能完成分类；想要摘要和回复草稿时，再接云端 Key 或本地 Ollama。",
+      "faq2.q": "支持哪些邮箱？",
+      "faq2.a": "Gmail、Outlook、QQ 邮箱、163，以及任何标准 IMAP 服务器。授权码和 OAuth2 都支持；发信走 SMTP 或 Microsoft Graph。",
+      "faq3.q": "我的数据存在哪里？",
+      "faq3.a": "存在你自己机器上的 PostgreSQL 里。只有你配置的 AI 请求会离开本机，而且可以换成完全本地的模型。",
+      "faq4.q": "能在演示里连我自己的邮箱吗？",
+      "faq4.a": "不能。公开演示是只读的虚构数据，避免任何人的凭据落到别人的服务器上。想接真实邮箱请自行部署，三条命令即可。",
+      "close.h": "把清晨的第一个小时拿回来。",
+      "close.b": "打开演示，或者在自己的机器上五分钟跑起来。",
+      "foot.copy": "Mailigence — MIT 协议 · FastAPI + React + PostgreSQL",
+      "foot.zh": "中文说明"
+    }
+  };
+
+  var html = document.documentElement;
+  var langBtn = document.getElementById("lang");
+  var enNodes = [];
+
+  document.querySelectorAll("[data-i18n],[data-i18n-html]").forEach(function (el) {
+    enNodes.push({
+      el: el,
+      key: el.getAttribute("data-i18n") || el.getAttribute("data-i18n-html"),
+      html: el.hasAttribute("data-i18n-html"),
+      en: el.hasAttribute("data-i18n-html") ? el.innerHTML : el.textContent
+    });
+  });
+
+  function apply(lang) {
+    var dict = I18N[lang] || {};
+    enNodes.forEach(function (n) {
+      var val = dict[n.key];
+      if (val === undefined) val = n.en;
+      if (n.html) n.el.innerHTML = val;
+      else n.el.textContent = val;
+    });
+    document.querySelectorAll("[data-en][data-zh]").forEach(function (img) {
+      img.src = img.getAttribute("data-" + lang) || img.getAttribute("data-en");
+    });
+    var player = document.getElementById("player");
+    if (player) {
+      player.href = player.getAttribute("data-href-" + lang) || player.getAttribute("data-href-en");
+      // If the inline player was already opened, swap its source too.
+      var v = player.querySelector("video");
+      if (v) v.src = player.href;
+    }
+    html.lang = lang === "zh" ? "zh-CN" : "en";
+    document.title = lang === "zh"
+      ? "Mailigence — 所有邮箱，一个安静的早晨"
+      : "Mailigence — Every mailbox. One quiet morning.";
+    langBtn.textContent = lang === "zh" ? "EN" : "中文";
+    try { localStorage.setItem("mg-site-lang", lang); } catch (e) {}
+  }
+
+  var start = "en";
+  try {
+    var saved = localStorage.getItem("mg-site-lang");
+    if (saved === "zh" || saved === "en") start = saved;
+  } catch (e) {}
+
+  langBtn.addEventListener("click", function () {
+    apply(html.lang === "zh-CN" ? "en" : "zh");
+  });
+
+  // Inline playback: the anchor stays a working link if JS is unavailable.
+  var player = document.getElementById("player");
+  player.addEventListener("click", function (ev) {
+    if (player.querySelector("video")) return; // native controls handle it
+    ev.preventDefault();
+    var v = document.createElement("video");
+    v.src = player.href;
+    v.poster = document.getElementById("poster").src;
+    v.controls = true;
+    v.autoplay = true;
+    v.playsInline = true;
+    v.preload = "metadata";
+    var badge = player.querySelector(".badge");
+    if (badge) badge.remove();
+    var poster = document.getElementById("poster");
+    if (poster) poster.remove();
+    player.appendChild(v);
+    player.style.background = "#000";
+  });
+
+  if (start !== "en") apply(start);
+})();
+</script>
+</body>
+</html>
