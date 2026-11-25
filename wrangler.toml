@@ -1,0 +1,8 @@
+# Cloudflare Workers static hosting for the marketing landing page.
+# The application itself is self-hosted (Docker / start.bat); this Worker only
+# serves ./site, so the project page is reachable at mailigence.online.
+name = "mailigence"
+compatibility_date = "2025-06-01"
+
+[assets]
+directory = "./site"
