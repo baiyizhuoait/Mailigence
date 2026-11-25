@@ -9,7 +9,7 @@ English | [简体中文](./README.md)
 Mailigence is a self-hosted email aggregation and AI analysis tool. It brings Gmail / Outlook / QQ Mail / 163 — any IMAP-capable mailbox — into one interface, and uses AI (or pure rule-based logic) to automatically handle **classification, priority ranking, a to-do queue, schedule extraction, and a daily digest**. One look in the morning and you know exactly what today needs.
 
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" alt="Mailigence dashboard: priority queue, AI daily briefing and schedule" width="920">
+  <img src="docs/screenshots/dashboard.en.png" alt="Mailigence dashboard: priority queue, AI daily briefing and schedule" width="920">
 </p>
 
 <p align="center">
@@ -35,7 +35,7 @@ Mailigence is a self-hosted email aggregation and AI analysis tool. It brings Gm
 
 | Priority queue (with time estimates) | The same UI on mobile |
 |---|---|
-| <img src="docs/screenshots/queue.png" width="430"> | <img src="docs/screenshots/mobile.png" width="250"> |
+| <img src="docs/screenshots/queue.en.png" width="430"> | <img src="docs/screenshots/mobile.en.png" width="250"> |
 
 <p>
   <img src="https://img.shields.io/badge/stack-FastAPI%20%2B%20React%20%2B%20PostgreSQL-4a9eff" alt="stack">
